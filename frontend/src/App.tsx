@@ -10,6 +10,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import UserLoginForm from "./components/auth/UserLoginForm";
 import OfficerLoginForm from "./components/auth/OfficerLoginForm";
+// LoginSelector removed per request; route `/login` now points to user login form directly
+import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Apply from "./pages/Apply";
@@ -41,8 +43,10 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<UserLoginForm />} />
               <Route path="/login/user" element={<UserLoginForm />} />
               <Route path="/login/officer" element={<OfficerLoginForm />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Citizen Routes */}

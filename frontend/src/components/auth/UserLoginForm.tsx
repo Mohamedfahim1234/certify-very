@@ -205,8 +205,15 @@ export default function UserLoginForm() {
         </form>
       )}
 
-          <div className="pt-4 text-center text-xs text-muted-foreground border-t">
-            <div className="inline-flex items-center gap-1">
+          <div className="pt-4 text-center text-sm text-muted-foreground border-t space-y-3">
+            <div>
+              <span className="text-sm">Don't have an account?</span>
+              <Button variant="link" onClick={() => navigate('/register')} className="ml-2 text-primary">
+                Register
+              </Button>
+            </div>
+
+            <div className="inline-flex items-center gap-1 text-xs">
               <Shield className="h-3 w-3" />
               Secure Login
             </div>

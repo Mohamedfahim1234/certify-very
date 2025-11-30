@@ -199,9 +199,9 @@ export default function Apply() {
                 )}
               </AnimatePresence>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 size="lg"
                 disabled={!selectedType || Object.keys(uploads).length === 0}
               >
