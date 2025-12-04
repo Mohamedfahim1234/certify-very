@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* E-Governance Certificate System Design System */
+
+@layer base {
+  :root {
+    /* Royal Blue Primary */
+    --background: 220 100% 98%;
+    --foreground: 0 0% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+
+    --primary: 216 100% 34%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Emerald Green Accent */
+    --accent: 165 100% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    --secondary: 216 80% 92%;
+    --secondary-foreground: 216 100% 34%;
+
+    --muted: 220 40% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 30% 88%;
+    --input: 220 30% 88%;
+    --ring: 216 100% 34%;
+
+    --radius: 0.75rem;
+
+    /* Status Colors */
+    --status-submitted: 0 0% 60%;
+    --status-pending: 216 100% 60%;
+    --status-approved: 165 100% 39%;
+    --status-rejected: 0 84% 60%;
+    --status-amber: 38 92% 50%;
+    --status-teal: 165 80% 45%;
+
+    /* Glassmorphism */
+    --glass-bg: 0 0% 100% / 0.8;
+    --glass-border: 220 30% 88% / 0.3;
+    --glass-shadow: 216 100% 34% / 0.1;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(216 100% 34%), hsl(216 100% 45%));
+    --gradient-accent: linear-gradient(135deg, hsl(165 100% 39%), hsl(165 100% 50%));
+    --gradient-hero: linear-gradient(135deg, hsl(216 100% 34%) 0%, hsl(165 100% 39%) 100%);
+  }
+
+  .dark {
+    --background: 216 30% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 216 25% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 216 25% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 216 100% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 165 100% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --secondary: 216 30% 18%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 216 25% 16%;
+    --muted-foreground: 0 0% 65%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 216 25% 20%;
+    --input: 216 25% 20%;
+    --ring: 216 100% 60%;
+
+    /* Dark mode glassmorphism */
+    --glass-bg: 216 25% 12% / 0.8;
+    --glass-border: 216 25% 30% / 0.3;
+    --glass-shadow: 0 0% 0% / 0.3;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Card */
+  .glass-card {
+    @apply backdrop-blur-lg bg-white/80 dark:bg-card/80 border border-white/30 dark:border-border/30 rounded-2xl shadow-lg;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-submitted {
+    @apply bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300;
+  }
+
+  .status-pending {
+    @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300;
+  }
+
+  .status-approved {
+    @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300;
+  }
+
+  .status-rejected {
+    @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300;
+  }
+
+  .status-amber {
+    @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300;
+  }
+
+  .status-teal {
+    @apply bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+}
