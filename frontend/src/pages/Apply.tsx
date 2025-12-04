@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCertificates, CertificateType } from '@/contexts/CertificateContext';
+import { CertificateType } from '@/contexts/CertificateContext';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import ChatbotWidget from '@/components/ChatbotWidget';
@@ -12,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const certificateTypes = [
   { 
@@ -42,11 +42,12 @@ const certificateTypes = [
 ];
 
 export default function Apply() {
-  const { user } = useAuth();
-  const { addCertificate } = useCertificates();
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<CertificateType | ''>('');
   const [uploads, setUploads] = useState<{ [key: string]: File | null }>({});
+
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem('token');
 
   const selectedCertificate = certificateTypes.find(c => c.value === selectedType);
 
@@ -71,10 +72,10 @@ export default function Apply() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!selectedType || !user) return;
+    console.log('Submitting application for:', selectedType, uploads);
+    if (!selectedType ) return;
 
     const requiredDocs = selectedCertificate?.documents || [];
     const missingDocs = requiredDocs.filter(doc => !uploads[doc]);
@@ -84,23 +85,38 @@ export default function Apply() {
       return;
     }
 
-    // Create certificate
-    addCertificate({
-      applicantId: user.id,
-      applicantName: user.name,
-      type: selectedType,
-      status: 'pending_officer',
-      submittedDate: new Date().toISOString().split('T')[0],
-      documents: Object.entries(uploads).map(([name, file]) => ({
-        name: file?.name || name,
-        url: '#',
-        type: file?.type || 'application/pdf'
-      })),
-      approvalHistory: []
+    try {
+
+       const form = new FormData();
+    form.append("certificateType", selectedType);
+
+    // Append all uploaded files under the same key `documentUrl`
+    // (we no longer send a separate `aadharUrl` field)
+    Object.keys(uploads).forEach((key) => {
+      const file = uploads[key];
+      if (file) {
+        form.append('documentUrl', file as File);
+      }
     });
 
-    toast.success('Application submitted successfully!');
-    navigate('/my-certificates');
+      const response = await axios.post(`${API_URL}/user/apply-certificate`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      if (response.status !== 200) {
+        toast.error('Failed to submit application. Please try again.');
+        return;
+      }
+      toast.success('Documents uploaded successfully');
+      navigate('/my-certificates');
+    } catch (error) {
+      console.error('Error uploading documents:', error);
+      toast.error('An error occurred while uploading documents. Please try again.');
+      return;
+    }
+
   };
 
   return (
@@ -199,9 +215,9 @@ export default function Apply() {
                 )}
               </AnimatePresence>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 size="lg"
                 disabled={!selectedType || Object.keys(uploads).length === 0}
               >

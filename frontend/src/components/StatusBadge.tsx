@@ -17,7 +17,10 @@ export const StatusBadge = ({ status }: StatusBadgeProps) => {
     rejected: { label: 'Rejected', className: 'status-rejected' },
   };
 
-  const config = statusConfig[status];
+  const config = statusConfig[status] || {
+    label: status || "Unknown",
+    className: "status-unknown"
+  };
 
   return (
     <span className={`status-badge ${config.className}`}>

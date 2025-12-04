@@ -1,5 +1,3 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { useCertificates } from '@/contexts/CertificateContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Navbar } from '@/components/layout/Navbar';
@@ -8,17 +6,90 @@ import ChatbotWidget from '@/components/ChatbotWidget';
 import { motion } from 'framer-motion';
 import { FileText, Search, MessageCircle, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+
+interface certificate{
+   userId: String,
+    certificateType: String,
+    aadharUrl: String,
+    documentUrl: String,
+    status:String , enum: ['pending', 'approved', 'rejected'],
+    appliedAt: Date,
+    createdAt: Date,
+    updatedAt: Date
+}
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const { getCertificatesByUserId } = useCertificates();
+  const [user, setUser ] = useState<any>(null);
+  const [certificates, setCertificates ] = useState<certificate[]>([]);
   const navigate = useNavigate();
 
-  const userCertificates = user ? getCertificatesByUserId(user.id) : [];
-  const pendingCount = userCertificates.filter(c => c.status.includes('pending')).length;
-  const approvedCount = userCertificates.filter(c => c.status.includes('approved')).length;
+  const API_URL = import.meta.env.VITE_API_URL;
 
-  return (
+  useEffect(() => {
+    
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      navigate('/');
+    }
+
+    if(role !== 'citizen'){
+      console.log('Unauthorized role, redirecting to login');
+      navigate('/');
+    }
+
+    const getUserData = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.status === 200) {
+          const userData = response.data.user;
+          setUser(userData);
+        } else {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        navigate('/');
+      }
+    };
+
+    const getCertificatesByUserId = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/user/certificates`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.status === 200) {
+          const certificates = response.data.certificates;
+          const certifi = Array.isArray(certificates) ? certificates : [];
+          setCertificates(certifi);
+          console.log('Certificates fetched:', certifi);
+        }
+
+      } catch (error) {
+        
+      }
+    }
+
+    getUserData();
+    getCertificatesByUserId();
+  }, [navigate]);
+
+  const pendingCount = certificates.filter(c => c.status.includes('pending')).length || 0;
+  console.log('Pending Count:', pendingCount);
+  const approvedCount = certificates.filter(c => c.status.includes('approved')).length || 0;
+  console.log('Approved Count:', approvedCount);
+
+  return ( 
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
@@ -47,7 +118,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Applications</p>
-                  <p className="text-2xl font-bold">{userCertificates.length}</p>
+                  <p className="text-2xl font-bold">{certificates.length}</p>
                 </div>
               </div>
             </Card>

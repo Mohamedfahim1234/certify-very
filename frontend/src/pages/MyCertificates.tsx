@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCertificates, Certificate } from '@/contexts/CertificateContext';
+import { useEffect, useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import ChatbotWidget from '@/components/ChatbotWidget';
@@ -10,13 +8,40 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
 import { Eye, Download, FileText } from 'lucide-react';
+import axios from 'axios';
+import { CertificateStatus } from '@/contexts/CertificateContext';
+
+interface Certificate {
+  _id: string;
+  userId: string;
+  applicantName: string;
+  certificateType: string;
+  // aadharUrl removed — documents are sent as an array of urls
+  documentUrl?: string[];
+  status: CertificateStatus;
+  appliedAt: string | Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  rejectionReason?: string | null;
+  approvalHistory: {
+    level: string;
+    action: 'approved' | 'rejected';
+    officer: string;
+    timestamp: string | Date;
+    remarks?: string;
+  }[];
+}
+
+interface StatusBadgeProps {
+  status: CertificateStatus;
+}
 
 export default function MyCertificates() {
-  const { user } = useAuth();
-  const { getCertificatesByUserId } = useCertificates();
+  const [certificates, setCertificates ] = useState<Certificate[]>([]);
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
 
-  const certificates = user ? getCertificatesByUserId(user.id) : [];
+  const token = localStorage.getItem('token');
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const getCertificateLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -28,6 +53,25 @@ export default function MyCertificates() {
     };
     return labels[type] || type;
   };
+
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/user/certificates`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const certificate = response.data.certificates;
+        const certify = Array.isArray(certificate) ? certificate : [];
+        setCertificates(certify);
+      } catch (error) {
+        console.error('Error fetching certificates:', error);
+      }
+    };
+
+    fetchCertificates();
+  }, [API_URL, token]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -61,7 +105,7 @@ export default function MyCertificates() {
             <div className="space-y-4">
               {certificates.map((cert, index) => (
                 <motion.div
-                  key={cert.id}
+                  key={cert._id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
@@ -71,13 +115,13 @@ export default function MyCertificates() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="font-heading font-semibold text-lg">
-                            {getCertificateLabel(cert.type)}
+                            {getCertificateLabel(cert.certificateType)}
                           </h3>
                           <StatusBadge status={cert.status} />
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">
-                          <p>Certificate ID: <span className="font-mono font-semibold text-foreground">{cert.id}</span></p>
-                          <p>Submitted: {new Date(cert.submittedDate).toLocaleDateString()}</p>
+                          <p>Certificate ID: <span className="font-mono font-semibold text-foreground">{cert._id}</span></p>
+                          <p>Submitted: {new Date(cert.appliedAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <Button
@@ -101,7 +145,7 @@ export default function MyCertificates() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading text-2xl">
-              {selectedCert && getCertificateLabel(selectedCert.type)}
+              {selectedCert && getCertificateLabel(selectedCert.certificateType)}
             </DialogTitle>
           </DialogHeader>
 
@@ -111,7 +155,7 @@ export default function MyCertificates() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Certificate ID</p>
-                  <p className="font-mono font-semibold">{selectedCert.id}</p>
+                  <p className="font-mono font-semibold">{selectedCert._id}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Status</p>
@@ -123,30 +167,43 @@ export default function MyCertificates() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Submitted</p>
-                  <p className="font-semibold">{new Date(selectedCert.submittedDate).toLocaleDateString()}</p>
+                  <p className="font-semibold">{new Date(selectedCert.appliedAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
               {/* Documents */}
               <div>
                 <h4 className="font-semibold mb-3">Uploaded Documents</h4>
-                <div className="grid gap-2">
-                  {selectedCert.documents.map((doc, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm">{doc.name}</span>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        <Button size="sm" variant="ghost">
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  <div className="grid gap-2">
+                    {selectedCert.documentUrl && selectedCert.documentUrl.length > 0 ? (
+                      selectedCert.documentUrl.map((url, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <span className="text-sm">Document {idx + 1}</span>
+                          <div className="flex gap-2">
+                            <a
+                              className="btn btn-sm btn-ghost flex items-center"
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View
+                            </a>
+                            <a
+                              className="btn btn-sm btn-ghost flex items-center"
+                              href={url}
+                              download
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No documents uploaded</p>
+                    )}
+                  </div>
               </div>
 
               {/* Approval Timeline */}

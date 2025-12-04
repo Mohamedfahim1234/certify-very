@@ -9,17 +9,19 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
 import { Smartphone, KeyRound, Shield, Loader2, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 export default function UserLoginForm() {
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phone, setPhone] = useState('');
+  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSendOTP = (e: React.FormEvent) => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!captchaVerified) {
@@ -27,40 +29,46 @@ export default function UserLoginForm() {
       return;
     }
 
-    if (phone.length === 10) {
+    try {
       setLoading(true);
-      // Simulate OTP sending
-      setTimeout(() => {
-        toast.success('OTP sent to your mobile number!');
+      const response = await axios.post(`${API_URL}/user/request-otp`, { email });
+      if (response.status === 201) {
+        toast.success('OTP sent to your email');
         setStep('otp');
         setLoading(false);
-      }, 1000);
-    } else {
-      toast.error('Please enter a valid 10-digit phone number');
-    }
+      }else{
+        toast.error('Failed to send OTP. Please try again.');
+        setLoading(false);
+      }
+    } catch (error) {
+      toast.error('An error occurred. Please try again.');
+      setLoading(false);
+    }  
   };
 
-  const handleVerifyOTP = (e: React.FormEvent) => {
+  const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (otp.length === 6) {
-      setLoading(true);
-      // Simulate verification
-      setTimeout(() => {
-        login({
-          id: '1',
-          name: 'Rajesh Kumar',
-          phone,
-          email: 'rajesh@example.com',
-          role: 'citizen',
-        });
-        toast.success('Login successful!');
+      try{
+      const response = await axios.post(`${API_URL}/user/login`, { email, otp });
+      if(response.status == 200){
+        const userData = response.data.user;
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('role', response.data.user.role);
         navigate('/dashboard');
-      }, 1000);
-    } else {
-      toast.error('Please enter a valid 6-digit OTP');
+        toast.success('Login successful!');
+      }else{
+        toast.error('Invalid OTP. Please try again.');
+        setLoading(false);
+      }
+    }catch(error){
+      toast.error('An error occurred during login. Please try again.');
+      setLoading(false);
     }
+  }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 gradient-hero relative overflow-hidden">
@@ -94,30 +102,30 @@ export default function UserLoginForm() {
         </div>
         <h1 className="font-heading text-3xl font-bold">User Login</h1>
         <p className="text-muted-foreground">
-          {step === 'phone'
-            ? 'Enter your mobile number to receive OTP'
-            : 'Enter the 6-digit OTP sent to your mobile'}
+          {step === 'email'
+            ? 'Enter your email to receive OTP'
+            : 'Enter the 6-digit OTP sent to your email'}
         </p>
       </div>
 
       {/* Progress Indicator */}
       <div className="flex items-center justify-center gap-2">
-        <div className={`h-2 w-16 rounded-full transition-colors ${step === 'phone' ? 'bg-primary' : 'bg-primary/30'}`} />
+        <div className={`h-2 w-16 rounded-full transition-colors ${step === 'email' ? 'bg-primary' : 'bg-primary/30'}`} />
         <div className={`h-2 w-16 rounded-full transition-colors ${step === 'otp' ? 'bg-primary' : 'bg-primary/30'}`} />
       </div>
 
-      {step === 'phone' ? (
+      {step === 'email' ? (
         <form onSubmit={handleSendOTP} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="phone">Mobile Number</Label>
+            <Label htmlFor="email">Email</Label>
             <div className="relative">
               <Smartphone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
               <Input
-                id="phone"
-                type="tel"
-                placeholder="10-digit mobile number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
               />
@@ -175,7 +183,7 @@ export default function UserLoginForm() {
               type="button"
               variant="outline"
               onClick={() => {
-                setStep('phone');
+                setStep('email');
                 setOtp('');
               }}
               className="flex-1"
@@ -205,8 +213,15 @@ export default function UserLoginForm() {
         </form>
       )}
 
-          <div className="pt-4 text-center text-xs text-muted-foreground border-t">
-            <div className="inline-flex items-center gap-1">
+          <div className="pt-4 text-center text-sm text-muted-foreground border-t space-y-3">
+            <div>
+              <span className="text-sm">Don't have an account?</span>
+              <Button variant="link" onClick={() => navigate('/register')} className="ml-2 text-primary">
+                Register
+              </Button>
+            </div>
+
+            <div className="inline-flex items-center gap-1 text-xs">
               <Shield className="h-3 w-3" />
               Secure Login
             </div>
@@ -215,4 +230,4 @@ export default function UserLoginForm() {
       </div>
     </div>
   );
-}
+  }

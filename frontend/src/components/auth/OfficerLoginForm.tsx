@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { motion } from 'framer-motion';
 import { ShieldCheck, User, Lock, Eye, EyeOff, Loader2, AlertTriangle, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const mockOfficials = {
   'officer1': { password: 'pass123', name: 'Amit Sharma', role: 'officer' as const },
@@ -17,16 +17,17 @@ const mockOfficials = {
 };
 
 export default function OfficerLoginForm() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (loginAttempts >= 3 && !captchaVerified) {
@@ -36,24 +37,24 @@ export default function OfficerLoginForm() {
 
     setLoading(true);
 
-    // Simulate login delay
-    setTimeout(() => {
-      const official = mockOfficials[username as keyof typeof mockOfficials];
-
-      if (official && official.password === password) {
-        login({
-          id: username,
-          name: official.name,
-          role: official.role,
-        });
-        toast.success(`Welcome back, ${official.name}!`);
+    try {
+      const response = await axios.post(`${API_URL}/officer/login`, { email, password });
+      if(response.status === 200){
+        const official = response.data.user;
+        console.log('Logged in official:', official);
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('role', official.role);
+        toast.success(`Welcome back, ${official.username}!`);
         navigate('/official-dashboard');
-      } else {
-        setLoginAttempts((prev) => prev + 1);
-        toast.error('Invalid credentials');
-        setLoading(false);
+        return;
       }
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Invalid credentials');
+      setLoading(false);
+      return;
+    }
+
   };
 
   return (
@@ -92,15 +93,15 @@ export default function OfficerLoginForm() {
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="email">Email</Label>
           <div className="relative">
             <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
-              id="username"
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="pl-10"
               required
             />

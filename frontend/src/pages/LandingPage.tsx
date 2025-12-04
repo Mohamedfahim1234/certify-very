@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
@@ -8,17 +7,18 @@ import { useEffect } from 'react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      if (user?.role === 'citizen') {
+    const token = localStorage.getItem('token');
+    if (!token) return navigate('/');
+    const role = localStorage.getItem('role');
+      if (role === 'citizen') {
         navigate('/dashboard');
       } else {
+        console.log('Navigating to official dashboard');
         navigate('/official-dashboard');
       }
-    }
-  }, [isAuthenticated, user, navigate]);
+  }, [navigate]);
 
   const features = [
     {

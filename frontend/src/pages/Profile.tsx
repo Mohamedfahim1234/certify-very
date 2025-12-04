@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -12,12 +11,53 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, LogOut, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Profile() {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const [user, setUser ] = useState<any>(null);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      navigate('/');
+    } else {
+      const getUserData = async () => {
+        try {
+          const role = localStorage.getItem('role');
+          const profilePath = (role === 'officer' || role === 'senior') ? '/officer/profile' : '/user/profile';
+
+          const response = await axios.get(`${API_URL}${profilePath}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.status === 200) {
+            const userData = response.data.user || response.data.officer || response.data;
+            setUser(userData);
+            const role = localStorage.getItem('role');
+            const isOfficer = role === 'officer' || role === 'senior';
+            // officers use `username`, regular users use `name`
+            setName(isOfficer ? (userData?.username || userData?.name || '') : (userData?.name || ''));
+            setEmail(userData?.email || '');
+          } else {
+            navigate('/');
+          }
+        } catch (error) {
+          console.error('Failed to fetch user data:', error);
+          navigate('/');
+        }
+      };
+
+      getUserData();
+    }
+  }, [navigate]);
 
   const handleSave = () => {
     // In a real app, this would update the user in the backend
@@ -25,7 +65,8 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
     toast.success('Logged out successfully');
     navigate('/login');
   };
@@ -51,10 +92,10 @@ export default function Profile() {
             {/* Profile Picture */}
             <div className="flex items-center gap-4">
               <div className="h-20 w-20 rounded-full bg-gradient-primary flex items-center justify-center text-white text-2xl font-bold">
-                {user?.name.charAt(0).toUpperCase()}
+                {(name ? name.charAt(0) : '').toUpperCase()}
               </div>
               <div>
-                <h3 className="font-semibold text-lg">{user?.name}</h3>
+                <h3 className="font-semibold text-lg">{name || user?.username || user?.name}</h3>
                 <p className="text-sm text-muted-foreground capitalize">
                   {user?.role === 'citizen' ? 'Citizen' : 
                    user?.role === 'officer' ? 'Verifying Officer' :

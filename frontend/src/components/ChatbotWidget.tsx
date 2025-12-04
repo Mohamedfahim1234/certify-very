@@ -4,7 +4,6 @@ import { MessageCircle, X, RotateCcw, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -22,7 +21,6 @@ const predefinedResponses: Record<string, string> = {
 };
 
 export default function ChatbotWidget() {
-  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -33,8 +31,9 @@ export default function ChatbotWidget() {
     },
   ]);
 
+  const user = localStorage.getItem('role');
   // Only show for logged-in citizens
-  if (!user || user.role !== 'citizen') return null;
+  if (!user || user !== 'citizen') return null;
 
   const handleQuickReply = (reply: string) => {
     // Add user message

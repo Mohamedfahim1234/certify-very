@@ -1,15 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { FileCheck, Moon, Sun, LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 export const Navbar = () => {
-  const { user, logout } = useAuth();
   const location = useLocation();
   const [isDark, setIsDark] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const user = localStorage.getItem('role');
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -28,7 +30,7 @@ export const Navbar = () => {
     { to: '/profile', label: 'Profile' },
   ];
 
-  const links = user?.role === 'citizen' ? citizenLinks : officialLinks;
+  const links = user === 'citizen' ? citizenLinks : officialLinks;
 
   return (
     <nav className="sticky top-0 z-50 glass-card border-b">
@@ -80,7 +82,13 @@ export const Navbar = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={logout}
+                  onClick={
+                    () => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('role');
+                      navigate('/');
+                  }
+                }
                   className="hidden md:flex rounded-full"
                   title="Logout"
                 >
@@ -122,8 +130,10 @@ export const Navbar = () => {
               <Button
                 variant="ghost"
                 className="w-full justify-start text-destructive"
-                onClick={() => {
-                  logout();
+                    onClick={() => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('role');
+                      navigate('/login/officer');  
                   setMobileMenuOpen(false);
                 }}
               >

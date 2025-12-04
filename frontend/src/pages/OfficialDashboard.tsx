@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCertificates, Certificate, CertificateStatus } from '@/contexts/CertificateContext';
+import { useEffect, useState } from 'react';
+import { CertificateStatus } from '@/contexts/CertificateContext';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card } from '@/components/ui/card';
@@ -14,71 +13,122 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { Eye, CheckCircle, XCircle, Search, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+interface Certificate {
+  _id: string;
+  userId: string;
+  applicantName: string;
+  certificateType: string;
+  documentUrl?: string[];
+  status: CertificateStatus;
+  appliedAt: string | Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  rejectionReason?: string | null;
+  approvalHistory: {
+    level: string;
+    action: 'approved' | 'rejected';
+    officer: string;
+    timestamp: string | Date;
+    remarks?: string;
+  }[];
+}
 
 export default function OfficialDashboard() {
-  const { user } = useAuth();
-  const { certificates, updateCertificateStatus } = useCertificates();
-  const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const navigate = useNavigate();
+  const [certificatesData, setCertificatesData] = useState<Certificate[]>([]);
+  const [selectedCert, setSelectedCert ] = useState<Certificate | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
-  // Determine which certificates this officer should see
-  const getRelevantCertificates = () => {
-    let relevantStatuses: CertificateStatus[] = [];
-    
-    if (user?.role === 'officer') {
-      relevantStatuses = ['pending_officer', 'approved_officer', 'rejected'];
-    } else if (user?.role === 'senior') {
-      relevantStatuses = ['pending_senior', 'approved_senior', 'rejected'];
-    } else if (user?.role === 'higher') {
-      relevantStatuses = ['pending_higher', 'approved_higher', 'rejected'];
-    }
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('role');
 
-    return certificates.filter(cert => 
-      relevantStatuses.includes(cert.status) &&
-      (searchQuery === '' || 
-        cert.applicantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cert.id.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+  if (!token) {
+    navigate('/officer-login');
+  }
+
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/officer/certificates`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        if (response.status === 200) {
+          console.log('Fetched certificates:', response.data.certificates);
+          const certificate = response.data.certificates;
+          const Certificate =  Array.isArray(certificate) ? certificate : [];
+          setCertificatesData(Certificate);
+        }
+      } catch (error) {
+        console.error('Error fetching certificates:', error);
+        toast.error('Failed to fetch certificates');
+      }
+    };
+
+    fetchCertificates();
+  }, [API_URL, token]);
+
+
+  const handleApprove = async(cert: Certificate) => {
+    try {
+      const response = await axios.put(`${API_URL}/officer/certificate/${cert._id}/status`, {
+        status: 'approved',
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.status === 200) {
+        toast.success('Certificate approved successfully');
+        setSelectedCert(null);
+      }else{
+        toast.error('Failed to approve certificate');
+      }
+    } catch (error) {
+      toast.error('Failed to approve certificate');
+    }
   };
 
-  const handleApprove = (cert: Certificate) => {
-    if (!user) return;
-
-    let newStatus: CertificateStatus;
-    if (user.role === 'officer') {
-      newStatus = 'pending_senior';
-    } else if (user.role === 'senior') {
-      newStatus = 'pending_higher';
-    } else {
-      newStatus = 'approved_higher';
-    }
-
-    updateCertificateStatus(cert.id, newStatus, user.name);
-    toast.success(`Certificate ${cert.id} approved successfully!`);
-    setSelectedCert(null);
-  };
-
-  const handleReject = (cert: Certificate) => {
-    if (!user || !rejectReason.trim()) {
-      toast.error('Please provide a rejection reason');
+  const handleReject = async(cert: Certificate) => {
+    // enforce that a rejection reason is provided
+    if (!rejectReason || rejectReason.trim() === '') {
+      toast.error('Please enter a rejection reason before rejecting');
       return;
     }
 
-    updateCertificateStatus(cert.id, 'rejected', user.name, rejectReason);
-    toast.success(`Certificate ${cert.id} rejected`);
-    setSelectedCert(null);
-    setRejectReason('');
+    try {
+      const response = await axios.put(`${API_URL}/officer/certificate/${cert._id}/status`, {
+        status: 'rejected',
+        remarks: rejectReason,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.status === 200) {
+        toast.success('Certificate rejected successfully');
+        setSelectedCert(null);
+        setRejectReason('');
+      } else {
+        toast.error('Failed to reject certificate');
+      }
+    } catch (error) {
+      toast.error('Failed to reject certificate');
+    }
   };
 
-  const relevantCerts = getRelevantCertificates();
-
-  const pendingCerts = relevantCerts.filter(c => c.status.includes('pending'));
-  const approvedCerts = relevantCerts.filter(c => c.status.includes('approved'));
-  const rejectedCerts = relevantCerts.filter(c => c.status === 'rejected');
-
-  const displayCerts = filterStatus === 'all' ? relevantCerts :
+  const pendingCerts = certificatesData.filter(c => c.status.includes('pending'));
+  const approvedCerts = certificatesData.filter(c => c.status.includes('approved'));
+  const rejectedCerts = certificatesData.filter(c => c.status === 'rejected');
+  
+  const displayCerts = filterStatus === 'all' ? certificatesData :
     filterStatus === 'pending' ? pendingCerts :
     filterStatus === 'approved' ? approvedCerts : rejectedCerts;
 
@@ -105,8 +155,8 @@ export default function OfficialDashboard() {
         >
           <div>
             <h1 className="font-heading text-3xl font-bold mb-2">
-              {user?.role === 'officer' ? 'Verifying Officer' : 
-               user?.role === 'senior' ? 'Senior Officer' : 
+              {user === 'officer' ? 'Verifying Officer' : 
+               user === 'senior' ? 'Senior Officer' : 
                'Higher Official'} Dashboard
             </h1>
             <p className="text-muted-foreground">
@@ -168,13 +218,13 @@ export default function OfficialDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {displayCerts.map((cert) => (
-                    <tr key={cert.id} className="border-t hover:bg-muted/30 transition-colors">
-                      <td className="p-4 font-mono text-sm">{cert.id}</td>
+                  {certificatesData.map((cert) => (
+                    <tr key={cert._id} className="border-t hover:bg-muted/30 transition-colors">
+                      <td className="p-4 font-mono text-sm">{cert._id}</td>
                       <td className="p-4">{cert.applicantName}</td>
-                      <td className="p-4">{getCertificateLabel(cert.type)}</td>
+                      <td className="p-4">{getCertificateLabel(cert.certificateType)}</td>
                       <td className="p-4 text-sm text-muted-foreground">
-                        {new Date(cert.submittedDate).toLocaleDateString()}
+                        {new Date(cert.appliedAt).toLocaleDateString()}
                       </td>
                       <td className="p-4">
                         <StatusBadge status={cert.status} />
@@ -204,9 +254,11 @@ export default function OfficialDashboard() {
       </main>
 
       {/* Review Modal */}
-      <Dialog open={!!selectedCert} onOpenChange={() => {
-        setSelectedCert(null);
-        setRejectReason('');
+      <Dialog open={!!selectedCert} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedCert(null);
+          setRejectReason('');
+        }
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -221,11 +273,11 @@ export default function OfficialDashboard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Certificate ID</p>
-                  <p className="font-mono font-semibold">{selectedCert.id}</p>
+                  <p className="font-mono font-semibold">{selectedCert._id}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Type</p>
-                  <p className="font-semibold">{getCertificateLabel(selectedCert.type)}</p>
+                  <p className="font-semibold">{getCertificateLabel(selectedCert.certificateType)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Applicant</p>
@@ -233,7 +285,7 @@ export default function OfficialDashboard() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Submitted</p>
-                  <p className="font-semibold">{new Date(selectedCert.submittedDate).toLocaleDateString()}</p>
+                  <p className="font-semibold">{new Date(selectedCert.appliedAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
@@ -241,21 +293,34 @@ export default function OfficialDashboard() {
               <div>
                 <h4 className="font-semibold mb-3">Submitted Documents</h4>
                 <div className="grid gap-2">
-                  {selectedCert.documents.map((doc, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <span className="text-sm">{doc.name}</span>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                        <Button size="sm" variant="ghost">
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
+                  {selectedCert.documentUrl && selectedCert.documentUrl.length > 0 ? (
+                    selectedCert.documentUrl.map((url, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <span className="text-sm">Document {idx + 1}</span>
+                        <div className="flex gap-2">
+                          <a
+                            className="btn btn-sm btn-ghost flex items-center"
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </a>
+                          <a
+                            className="btn btn-sm btn-ghost flex items-center"
+                            href={url}
+                            download
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            Download
+                          </a>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No documents uploaded</p>
+                  )}
                 </div>
               </div>
 
@@ -304,6 +369,8 @@ export default function OfficialDashboard() {
                       onClick={() => handleReject(selectedCert)}
                       variant="destructive"
                       className="flex-1"
+                      disabled={rejectReason.trim() === ''}
+                      title={rejectReason.trim() === '' ? 'Enter rejection reason to enable' : 'Reject application'}
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       Reject
