@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, RotateCcw, Send } from 'lucide-react';
+import { MessageCircle, X, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import axios from 'axios'
 
 interface Message {
   id: string;
@@ -12,12 +13,19 @@ interface Message {
   timestamp: Date;
 }
 
-const predefinedResponses: Record<string, string> = {
-  'How to Apply?': 'To apply for a certificate, click on "Apply Certificate" from your dashboard, select the certificate type you need, upload all required documents, and submit your application. You will receive updates on each verification stage.',
-  'Steps of Verification': 'Your application goes through three verification stages:\n1. Officer Review - Initial document verification\n2. Senior Officer - Secondary approval\n3. Higher Official - Final verification and approval\nYou can track the status at each stage from "My Certificates" page.',
-  'Required Documents': 'Required documents vary by certificate type:\n• Birth Certificate: Hospital records, Parent IDs\n• Marriage Certificate: Both applicants\' IDs, witness details\n• Death Certificate: Hospital records, family member ID\n• Income Certificate: Salary slips, bank statements\n\nAll documents must be clear scans or photos.',
-  'Track My Application': 'You can track your application status from the "My Certificates" page. Each application shows its current stage:\n• Submitted - Awaiting officer review\n• Under Review - Being verified\n• Approved - Verification complete\n• Rejected - Requires resubmission',
-  'Website Help': 'Navigation Guide:\n• Dashboard - Overview of your applications\n• Apply Certificate - Submit new application\n• My Certificates - View all your certificates\n• Profile - Update your information\n\nNeed more help? Each page has helpful tooltips and guides.',
+const API_URL = import.meta.env.VITE_API_URL;
+
+const token = localStorage.getItem('token');
+
+const askRagAPI = async (query: string) => {
+  const res = await axios.post(`${API_URL}/user/ask`,{ query, topk: 2}, {
+    headers:{
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+    console.log(res.data);
+    return res.data;
 };
 
 export default function ChatbotWidget() {
@@ -32,11 +40,10 @@ export default function ChatbotWidget() {
   ]);
 
   const user = localStorage.getItem('role');
-  // Only show for logged-in citizens
   if (!user || user !== 'citizen') return null;
 
-  const handleQuickReply = (reply: string) => {
-    // Add user message
+  // 🔹 Handle quick reply click
+  const handleQuickReply = async (reply: string) => {
     const userMessage: Message = {
       id: Date.now().toString(),
       text: reply,
@@ -44,15 +51,50 @@ export default function ChatbotWidget() {
       timestamp: new Date(),
     };
 
-    // Add bot response
-    const botMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      text: predefinedResponses[reply] || "I'm here to help! Please select one of the quick options below.",
-      sender: 'bot',
-      timestamp: new Date(),
-    };
+    setMessages((prev) => [...prev, userMessage]);
 
-    setMessages((prev) => [...prev, userMessage, botMessage]);
+    const loadingId = (Date.now() + 1).toString();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: loadingId,
+        text: 'Thinking...',
+        sender: 'bot',
+        timestamp: new Date(),
+      },
+    ]);
+
+    try {
+      const data = await askRagAPI(reply);
+
+      let botText = "Sorry, we don't have information related to this.";
+
+      if (data?.result?.length) {
+        botText = data.result.map((r: any) => r.text).join('\n\n');
+      } else if (data?.message) {
+        botText = data.message;
+      }
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === loadingId
+            ? { ...msg, text: botText, timestamp: new Date() }
+            : msg
+        )
+      );
+    } catch (error) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === loadingId
+            ? {
+                ...msg,
+                text: 'Server error. Please try again later.',
+                timestamp: new Date(),
+              }
+            : msg
+        )
+      );
+    }
   };
 
   const handleClearChat = () => {
@@ -141,7 +183,11 @@ export default function ChatbotWidget() {
                       key={message.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${
+                        message.sender === 'user'
+                          ? 'justify-end'
+                          : 'justify-start'
+                      }`}
                     >
                       <div
                         className={`max-w-[80%] rounded-2xl px-4 py-2 ${
@@ -150,7 +196,9 @@ export default function ChatbotWidget() {
                             : 'bg-muted text-foreground'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-line">{message.text}</p>
+                        <p className="text-sm whitespace-pre-line">
+                          {message.text}
+                        </p>
                         <p className="text-xs opacity-70 mt-1">
                           {message.timestamp.toLocaleTimeString([], {
                             hour: '2-digit',
@@ -165,7 +213,9 @@ export default function ChatbotWidget() {
 
               {/* Quick Replies */}
               <div className="p-4 bg-muted/50 border-t">
-                <p className="text-xs text-muted-foreground mb-2">Quick Options:</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Quick Options:
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {quickReplies.map((reply) => (
                     <Button
