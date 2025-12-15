@@ -59,9 +59,36 @@ export default function Profile() {
     }
   }, [navigate]);
 
-  const handleSave = () => {
-    // In a real app, this would update the user in the backend
-    toast.success('Profile updated successfully!');
+  const handleSave = async() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('No token found, redirecting to login');
+      navigate('/');
+    } else {
+        try {
+          const role = localStorage.getItem('role');
+          const profilePath = (role === 'officer' || role === 'senior') ? '/officer/profile/update' : '/user/profile/update';
+
+          const response = await axios.put(`${API_URL}${profilePath}`,{
+            name,
+            email
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.status === 200) {
+            toast.success('Profile updated successfully!');
+          } else {
+            navigate('/');
+          }
+        } catch (error) {
+          console.error('Failed to fetch user data:', error);
+          navigate('/');
+        }
+      };
   };
 
   const handleLogout = () => {
