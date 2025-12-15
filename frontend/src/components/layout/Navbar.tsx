@@ -25,39 +25,54 @@ export const Navbar = () => {
     { to: '/profile', label: 'Profile' },
   ];
 
-  const officialLinks = [
+  const lowerOfficerLinks = [
+    { to: '/official-dashboard/lower', label: 'Dashboard' },
+    { to: '/profile', label: 'Profile' },
+  ];
+
+  const midOfficerLinks = [
+    { to: '/official-dashboard/mid', label: 'Dashboard' },
+    { to: '/profile', label: 'Profile' },
+  ];
+
+  const higherOfficerLinks = [
     { to: '/official-dashboard', label: 'Dashboard' },
     { to: '/profile', label: 'Profile' },
   ];
 
-  const links = user === 'citizen' ? citizenLinks : officialLinks;
+  const links = user === 'citizen' ? citizenLinks :
+    user === 'lower' ? lowerOfficerLinks :
+      user === 'mid' ? midOfficerLinks :
+        higherOfficerLinks;
 
   return (
     <nav className="sticky top-0 z-50 glass-card border-b">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
-              <FileCheck className="h-6 w-6" />
-            </div>
-            <div className="hidden md:block">
-              <h1 className="font-heading font-bold text-lg leading-none text-primary">
-                CertifyGov
-              </h1>
-              <p className="text-xs text-muted-foreground">Digital Certificate System</p>
-            </div>
-          </Link>
+          <div className="flex-1 flex justify-start">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
+                <FileCheck className="h-6 w-6" />
+              </div>
+              <div className="hidden md:block">
+                <h1 className="font-heading font-bold text-lg leading-none text-primary">
+                  CertifyGov
+                </h1>
+                <p className="text-xs text-muted-foreground">Digital Certificate System</p>
+              </div>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           {user && (
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex flex-1 justify-center items-center gap-8">
               {links.map((link) => (
                 <Link key={link.to} to={link.to}>
                   <Button
                     variant={location.pathname === link.to ? 'default' : 'ghost'}
                     size="sm"
-                    className="transition-all"
+                    className="transition-all font-medium"
                   >
                     {link.label}
                   </Button>
@@ -67,7 +82,7 @@ export const Navbar = () => {
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex-1 flex justify-end items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -87,8 +102,8 @@ export const Navbar = () => {
                       localStorage.removeItem('token');
                       localStorage.removeItem('role');
                       navigate('/');
+                    }
                   }
-                }
                   className="hidden md:flex rounded-full"
                   title="Logout"
                 >
@@ -130,10 +145,10 @@ export const Navbar = () => {
               <Button
                 variant="ghost"
                 className="w-full justify-start text-destructive"
-                    onClick={() => {
-                      localStorage.removeItem('token');
-                      localStorage.removeItem('role');
-                      navigate('/login/officer');  
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('role');
+                  navigate('/login/officer');
                   setMobileMenuOpen(false);
                 }}
               >
