@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+<<<<<<< HEAD
 import { MessageCircle, X, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import axios from 'axios'
+=======
+import { MessageCircle, X, RotateCcw, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
 
 interface Message {
   id: string;
@@ -13,6 +20,7 @@ interface Message {
   timestamp: Date;
 }
 
+<<<<<<< HEAD
 const API_URL = import.meta.env.VITE_API_URL;
 
 const token = localStorage.getItem('token');
@@ -26,6 +34,14 @@ const askRagAPI = async (query: string) => {
 
     console.log(res.data);
     return res.data;
+=======
+const predefinedResponses: Record<string, string> = {
+  'How to Apply?': 'To apply for a certificate, click on "Apply Certificate" from your dashboard, select the certificate type you need, upload all required documents, and submit your application. You will receive updates on each verification stage.',
+  'Steps of Verification': 'Your application goes through three verification stages:\n1. Officer Review - Initial document verification\n2. Senior Officer - Secondary approval\n3. Higher Official - Final verification and approval\nYou can track the status at each stage from "My Certificates" page.',
+  'Required Documents': 'Required documents vary by certificate type:\n• Birth Certificate: Hospital records, Parent IDs\n• Marriage Certificate: Both applicants\' IDs, witness details\n• Death Certificate: Hospital records, family member ID\n• Income Certificate: Salary slips, bank statements\n\nAll documents must be clear scans or photos.',
+  'Track My Application': 'You can track your application status from the "My Certificates" page. Each application shows its current stage:\n• Submitted - Awaiting officer review\n• Under Review - Being verified\n• Approved - Verification complete\n• Rejected - Requires resubmission',
+  'Website Help': 'Navigation Guide:\n• Dashboard - Overview of your applications\n• Apply Certificate - Submit new application\n• My Certificates - View all your certificates\n• Profile - Update your information\n\nNeed more help? Each page has helpful tooltips and guides.',
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
 };
 
 export default function ChatbotWidget() {
@@ -40,10 +56,18 @@ export default function ChatbotWidget() {
   ]);
 
   const user = localStorage.getItem('role');
+<<<<<<< HEAD
   if (!user || user !== 'citizen') return null;
 
   // 🔹 Handle quick reply click
   const handleQuickReply = async (reply: string) => {
+=======
+  // Only show for logged-in citizens
+  if (!user || user !== 'citizen') return null;
+
+  const handleQuickReply = (reply: string) => {
+    // Add user message
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
     const userMessage: Message = {
       id: Date.now().toString(),
       text: reply,
@@ -51,6 +75,7 @@ export default function ChatbotWidget() {
       timestamp: new Date(),
     };
 
+<<<<<<< HEAD
     setMessages((prev) => [...prev, userMessage]);
 
     const loadingId = (Date.now() + 1).toString();
@@ -95,6 +120,17 @@ export default function ChatbotWidget() {
         )
       );
     }
+=======
+    // Add bot response
+    const botMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: predefinedResponses[reply] || "I'm here to help! Please select one of the quick options below.",
+      sender: 'bot',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage, botMessage]);
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
   };
 
   const handleClearChat = () => {
@@ -183,11 +219,15 @@ export default function ChatbotWidget() {
                       key={message.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
+<<<<<<< HEAD
                       className={`flex ${
                         message.sender === 'user'
                           ? 'justify-end'
                           : 'justify-start'
                       }`}
+=======
+                      className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
                     >
                       <div
                         className={`max-w-[80%] rounded-2xl px-4 py-2 ${
@@ -196,9 +236,13 @@ export default function ChatbotWidget() {
                             : 'bg-muted text-foreground'
                         }`}
                       >
+<<<<<<< HEAD
                         <p className="text-sm whitespace-pre-line">
                           {message.text}
                         </p>
+=======
+                        <p className="text-sm whitespace-pre-line">{message.text}</p>
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
                         <p className="text-xs opacity-70 mt-1">
                           {message.timestamp.toLocaleTimeString([], {
                             hour: '2-digit',
@@ -213,9 +257,13 @@ export default function ChatbotWidget() {
 
               {/* Quick Replies */}
               <div className="p-4 bg-muted/50 border-t">
+<<<<<<< HEAD
                 <p className="text-xs text-muted-foreground mb-2">
                   Quick Options:
                 </p>
+=======
+                <p className="text-xs text-muted-foreground mb-2">Quick Options:</p>
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
                 <div className="flex flex-wrap gap-2">
                   {quickReplies.map((reply) => (
                     <Button

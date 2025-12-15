@@ -59,6 +59,7 @@ export default function Profile() {
     }
   }, [navigate]);
 
+<<<<<<< HEAD
   const handleSave = async() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -89,6 +90,11 @@ export default function Profile() {
           navigate('/');
         }
       };
+=======
+  const handleSave = () => {
+    // In a real app, this would update the user in the backend
+    toast.success('Profile updated successfully!');
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
   };
 
   const handleLogout = () => {

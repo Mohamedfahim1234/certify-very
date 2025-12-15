@@ -25,6 +25,7 @@ export const Navbar = () => {
     { to: '/profile', label: 'Profile' },
   ];
 
+<<<<<<< HEAD
   const lowerOfficerLinks = [
     { to: '/official-dashboard/lower', label: 'Dashboard' },
     { to: '/profile', label: 'Profile' },
@@ -36,20 +37,28 @@ export const Navbar = () => {
   ];
 
   const higherOfficerLinks = [
+=======
+  const officialLinks = [
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
     { to: '/official-dashboard', label: 'Dashboard' },
     { to: '/profile', label: 'Profile' },
   ];
 
+<<<<<<< HEAD
   const links = user === 'citizen' ? citizenLinks :
     user === 'lower' ? lowerOfficerLinks :
       user === 'mid' ? midOfficerLinks :
         higherOfficerLinks;
+=======
+  const links = user === 'citizen' ? citizenLinks : officialLinks;
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
 
   return (
     <nav className="sticky top-0 z-50 glass-card border-b">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
+<<<<<<< HEAD
           <div className="flex-1 flex justify-start">
             <Link to="/" className="flex items-center gap-2 group">
               <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
@@ -67,12 +76,33 @@ export const Navbar = () => {
           {/* Desktop Navigation */}
           {user && (
             <div className="hidden md:flex flex-1 justify-center items-center gap-8">
+=======
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="p-2 rounded-lg bg-primary text-primary-foreground group-hover:scale-110 transition-transform">
+              <FileCheck className="h-6 w-6" />
+            </div>
+            <div className="hidden md:block">
+              <h1 className="font-heading font-bold text-lg leading-none text-primary">
+                CertifyGov
+              </h1>
+              <p className="text-xs text-muted-foreground">Digital Certificate System</p>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          {user && (
+            <div className="hidden md:flex items-center gap-1">
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
               {links.map((link) => (
                 <Link key={link.to} to={link.to}>
                   <Button
                     variant={location.pathname === link.to ? 'default' : 'ghost'}
                     size="sm"
+<<<<<<< HEAD
                     className="transition-all font-medium"
+=======
+                    className="transition-all"
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
                   >
                     {link.label}
                   </Button>
@@ -82,7 +112,11 @@ export const Navbar = () => {
           )}
 
           {/* Actions */}
+<<<<<<< HEAD
           <div className="flex-1 flex justify-end items-center gap-2">
+=======
+          <div className="flex items-center gap-2">
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
             <Button
               variant="ghost"
               size="icon"
@@ -102,8 +136,13 @@ export const Navbar = () => {
                       localStorage.removeItem('token');
                       localStorage.removeItem('role');
                       navigate('/');
+<<<<<<< HEAD
                     }
                   }
+=======
+                  }
+                }
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
                   className="hidden md:flex rounded-full"
                   title="Logout"
                 >
@@ -145,10 +184,17 @@ export const Navbar = () => {
               <Button
                 variant="ghost"
                 className="w-full justify-start text-destructive"
+<<<<<<< HEAD
                 onClick={() => {
                   localStorage.removeItem('token');
                   localStorage.removeItem('role');
                   navigate('/login/officer');
+=======
+                    onClick={() => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('role');
+                      navigate('/login/officer');  
+>>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
                   setMobileMenuOpen(false);
                 }}
               >
