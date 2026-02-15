@@ -17,7 +17,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [user, setUser ] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
@@ -30,7 +30,7 @@ export default function Profile() {
       const getUserData = async () => {
         try {
           const role = localStorage.getItem('role');
-          const profilePath = (role === 'officer' || role === 'senior') ? '/officer/profile' : '/user/profile';
+          const profilePath = (role === 'senior' || role === 'lower') ? '/senior-officer/profile' : '/officer/profile';
 
           const response = await axios.get(`${API_URL}${profilePath}`, {
             headers: {
@@ -59,42 +59,36 @@ export default function Profile() {
     }
   }, [navigate]);
 
-<<<<<<< HEAD
-  const handleSave = async() => {
+  const handleSave = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
       console.log('No token found, redirecting to login');
       navigate('/');
     } else {
-        try {
-          const role = localStorage.getItem('role');
-          const profilePath = (role === 'officer' || role === 'senior') ? '/officer/profile/update' : '/user/profile/update';
+      try {
+        const role = localStorage.getItem('role');
+        const profilePath = (role === 'officer' || role === 'senior') ? '/officer/profile/update' : '/user/profile/update';
 
-          const response = await axios.put(`${API_URL}${profilePath}`,{
-            name,
-            email
-          },
+        const response = await axios.put(`${API_URL}${profilePath}`, {
+          name,
+          email
+        },
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
 
-          if (response.status === 200) {
-            toast.success('Profile updated successfully!');
-          } else {
-            navigate('/');
-          }
-        } catch (error) {
-          console.error('Failed to fetch user data:', error);
+        if (response.status === 200) {
+          toast.success('Profile updated successfully!');
+        } else {
           navigate('/');
         }
-      };
-=======
-  const handleSave = () => {
-    // In a real app, this would update the user in the backend
-    toast.success('Profile updated successfully!');
->>>>>>> 7838adc785a33e341f72dc1ae2b937a4133b55c9
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        navigate('/');
+      }
+    };
   };
 
   const handleLogout = () => {
@@ -107,7 +101,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -130,9 +124,9 @@ export default function Profile() {
               <div>
                 <h3 className="font-semibold text-lg">{name || user?.username || user?.name}</h3>
                 <p className="text-sm text-muted-foreground capitalize">
-                  {user?.role === 'citizen' ? 'Citizen' : 
-                   user?.role === 'officer' ? 'Verifying Officer' :
-                   user?.role === 'senior' ? 'Senior Officer' : 'Higher Official'}
+                  {user?.role === 'citizen' ? 'Citizen' :
+                    user?.role === 'officer' ? 'Verifying Officer' :
+                      user?.role === 'senior' ? 'Senior Officer' : 'Higher Official'}
                 </p>
               </div>
             </div>

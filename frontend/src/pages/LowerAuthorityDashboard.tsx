@@ -16,6 +16,15 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+interface ApprovalHistoryItem {
+    level: string;
+    action: 'approved' | 'rejected';
+    officer: string;
+    timestamp: string | Date;
+    remarks?: string;
+    _id?: string;
+}
+
 interface Certificate {
     _id: string;
     userId: string;
@@ -27,14 +36,23 @@ interface Certificate {
     createdAt?: string | Date;
     updatedAt?: string | Date;
     rejectionReason?: string | null;
-    approvalHistory: {
-        level: string;
-        action: 'approved' | 'rejected';
-        officer: string;
-        timestamp: string | Date;
-        remarks?: string;
-    }[];
+    approvalHistory: ApprovalHistoryItem[];
 }
+
+// Helper function to get the lower authority status from approvalHistory
+const getLowerAuthorityStatus = (cert: Certificate): 'pending' | 'approved' | 'rejected' => {
+    // Check if there's an entry in approvalHistory for lower/officer/final level
+    const lowerApproval = cert.approvalHistory.find(
+        (h) => h.level === 'lower' || h.level === 'officer' || h.level === 'final'
+    );
+
+    if (lowerApproval) {
+        return lowerApproval.action === 'approved' ? 'approved' : 'rejected';
+    }
+
+    // If no entry found, it's pending
+    return 'pending';
+};
 
 export default function LowerAuthorityDashboard() {
     const navigate = useNavigate();
@@ -88,6 +106,24 @@ export default function LowerAuthorityDashboard() {
             });
             if (response.status === 200) {
                 toast.success('Certificate verified successfully');
+                // Update local state to reflect the approval
+                setCertificatesData(prev => prev.map(c => {
+                    if (c._id === cert._id) {
+                        return {
+                            ...c,
+                            approvalHistory: [
+                                ...c.approvalHistory,
+                                {
+                                    level: 'lower',
+                                    action: 'approved' as const,
+                                    officer: 'current-user',
+                                    timestamp: new Date().toISOString()
+                                }
+                            ]
+                        };
+                    }
+                    return c;
+                }));
                 setSelectedCert(null);
             } else {
                 toast.error('Failed to verify certificate');
@@ -115,6 +151,25 @@ export default function LowerAuthorityDashboard() {
             });
             if (response.status === 200) {
                 toast.success('Certificate rejected successfully');
+                // Update local state to reflect the rejection
+                setCertificatesData(prev => prev.map(c => {
+                    if (c._id === cert._id) {
+                        return {
+                            ...c,
+                            approvalHistory: [
+                                ...c.approvalHistory,
+                                {
+                                    level: 'lower',
+                                    action: 'rejected' as const,
+                                    officer: 'current-user',
+                                    timestamp: new Date().toISOString(),
+                                    remarks: rejectReason
+                                }
+                            ]
+                        };
+                    }
+                    return c;
+                }));
                 setSelectedCert(null);
                 setRejectReason('');
             } else {
@@ -125,9 +180,10 @@ export default function LowerAuthorityDashboard() {
         }
     };
 
-    const pendingCerts = certificatesData.filter(c => c.status.includes('pending'));
-    const approvedCerts = certificatesData.filter(c => c.status.includes('approved'));
-    const rejectedCerts = certificatesData.filter(c => c.status === 'rejected');
+    // Filter certificates based on lower authority's approval status from approvalHistory
+    const pendingCerts = certificatesData.filter(c => getLowerAuthorityStatus(c) === 'pending');
+    const approvedCerts = certificatesData.filter(c => getLowerAuthorityStatus(c) === 'approved');
+    const rejectedCerts = certificatesData.filter(c => getLowerAuthorityStatus(c) === 'rejected');
 
     const displayCerts = filterStatus === 'all' ? certificatesData :
         filterStatus === 'pending' ? pendingCerts :
@@ -144,6 +200,14 @@ export default function LowerAuthorityDashboard() {
         return labels[type] || type;
     };
 
+    // Get status badge props based on approvalHistory
+    const getStatusForBadge = (cert: Certificate): CertificateStatus => {
+        const status = getLowerAuthorityStatus(cert);
+        if (status === 'approved') return 'approved-officer' as CertificateStatus;
+        if (status === 'rejected') return 'rejected';
+        return 'pending_officer';
+    };
+
     return (
         <div className="min-h-screen flex flex-col">
             <Navbar />
@@ -155,8 +219,8 @@ export default function LowerAuthorityDashboard() {
                     className="space-y-6"
                 >
                     <div>
-                        <h1 className="font-heading text-3xl font-bold mb-2 text-sky-700 dark:text-sky-400">
-                            Verifying Officer Dashboard
+                        <h1 className="font-heading text-3xl font-bold mb-2 text-emerald-700 dark:text-emerald-400">
+                            Lower Authority Dashboard
                         </h1>
                         <p className="text-muted-foreground">
                             Initial verification of certificate applications
@@ -165,13 +229,13 @@ export default function LowerAuthorityDashboard() {
 
                     {/* Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="glass-card p-6 border-l-4 border-l-sky-500">
+                        <Card className="glass-card p-6 border-l-4 border-l-amber-500">
                             <p className="text-sm text-muted-foreground mb-1">Pending Verification</p>
-                            <p className="text-3xl font-bold text-sky-600">{pendingCerts.length}</p>
+                            <p className="text-3xl font-bold text-amber-600">{pendingCerts.length}</p>
                         </Card>
-                        <Card className="glass-card p-6 border-l-4 border-l-teal-500">
+                        <Card className="glass-card p-6 border-l-4 border-l-emerald-500">
                             <p className="text-sm text-muted-foreground mb-1">Verified</p>
-                            <p className="text-3xl font-bold text-teal-600">{approvedCerts.length}</p>
+                            <p className="text-3xl font-bold text-emerald-600">{approvedCerts.length}</p>
                         </Card>
                         <Card className="glass-card p-6 border-l-4 border-l-red-500">
                             <p className="text-sm text-muted-foreground mb-1">Rejected</p>
@@ -217,29 +281,40 @@ export default function LowerAuthorityDashboard() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {certificatesData.map((cert) => (
-                                        <tr key={cert._id} className="border-t hover:bg-muted/30 transition-colors">
-                                            <td className="p-4 font-mono text-sm">{cert._id}</td>
-                                            <td className="p-4">{cert.applicantName}</td>
-                                            <td className="p-4">{getCertificateLabel(cert.certificateType)}</td>
-                                            <td className="p-4 text-sm text-muted-foreground">
-                                                {new Date(cert.appliedAt).toLocaleDateString()}
-                                            </td>
-                                            <td className="p-4">
-                                                <StatusBadge status={cert.status} />
-                                            </td>
-                                            <td className="p-4">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => setSelectedCert(cert)}
-                                                >
-                                                    <Eye className="h-4 w-4 mr-1" />
-                                                    Verify
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {displayCerts.map((cert) => {
+                                        const lowerStatus = getLowerAuthorityStatus(cert);
+                                        return (
+                                            <tr key={cert._id} className="border-t hover:bg-muted/30 transition-colors">
+                                                <td className="p-4 font-mono text-sm">{cert._id.slice(-8)}</td>
+                                                <td className="p-4">{cert.applicantName}</td>
+                                                <td className="p-4">{getCertificateLabel(cert.certificateType)}</td>
+                                                <td className="p-4 text-sm text-muted-foreground">
+                                                    {new Date(cert.appliedAt).toLocaleDateString()}
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lowerStatus === 'approved'
+                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                        : lowerStatus === 'rejected'
+                                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                                                        }`}>
+                                                        {lowerStatus === 'approved' ? 'Verified' : lowerStatus === 'rejected' ? 'Rejected' : 'Pending'}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <Button
+                                                        size="sm"
+                                                        variant={lowerStatus === 'pending' ? 'default' : 'outline'}
+                                                        onClick={() => setSelectedCert(cert)}
+                                                        className={lowerStatus === 'pending' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
+                                                    >
+                                                        <Eye className="h-4 w-4 mr-1" />
+                                                        {lowerStatus === 'pending' ? 'Verify' : 'View'}
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                     {displayCerts.length === 0 && (
                                         <tr>
                                             <td colSpan={6} className="text-center py-12 text-muted-foreground">
@@ -263,8 +338,10 @@ export default function LowerAuthorityDashboard() {
             }}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle className="font-heading text-2xl text-sky-700">
-                            Verify Certificate Application
+                        <DialogTitle className="font-heading text-2xl text-emerald-700">
+                            {selectedCert && getLowerAuthorityStatus(selectedCert) === 'pending'
+                                ? 'Verify Certificate Application'
+                                : 'Certificate Details'}
                         </DialogTitle>
                     </DialogHeader>
 
@@ -290,6 +367,34 @@ export default function LowerAuthorityDashboard() {
                                 </div>
                             </div>
 
+                            {/* Approval History */}
+                            {selectedCert.approvalHistory.length > 0 && (
+                                <div>
+                                    <h4 className="font-semibold mb-3">Approval History</h4>
+                                    <div className="space-y-2">
+                                        {selectedCert.approvalHistory.map((history, idx) => (
+                                            <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
+                                                ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                                                : 'bg-red-50 dark:bg-red-900/20'
+                                                }`}>
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`font-medium ${history.action === 'approved' ? 'text-emerald-700' : 'text-red-700'
+                                                        }`}>
+                                                        {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
+                                                    </span>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {new Date(history.timestamp).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                {history.remarks && (
+                                                    <p className="text-sm mt-1 text-muted-foreground">{history.remarks}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Documents */}
                             <div>
                                 <h4 className="font-semibold mb-3">Submitted Documents</h4>
@@ -300,7 +405,7 @@ export default function LowerAuthorityDashboard() {
                                                 <span className="text-sm">Document {idx + 1}</span>
                                                 <div className="flex gap-2">
                                                     <a
-                                                        className="btn btn-sm btn-ghost flex items-center hover:text-sky-600"
+                                                        className="btn btn-sm btn-ghost flex items-center hover:text-emerald-600"
                                                         href={url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
@@ -309,7 +414,7 @@ export default function LowerAuthorityDashboard() {
                                                         View
                                                     </a>
                                                     <a
-                                                        className="btn btn-sm btn-ghost flex items-center hover:text-sky-600"
+                                                        className="btn btn-sm btn-ghost flex items-center hover:text-emerald-600"
                                                         href={url}
                                                         download
                                                     >
@@ -325,11 +430,11 @@ export default function LowerAuthorityDashboard() {
                                 </div>
                             </div>
 
-                            {/* Rejection Form */}
-                            {selectedCert.status.includes('pending') && (
+                            {/* Action Buttons - Only show if pending */}
+                            {getLowerAuthorityStatus(selectedCert) === 'pending' && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Rejection Reason (optional)</Label>
+                                        <Label>Rejection Reason (required for rejection)</Label>
                                         <Textarea
                                             placeholder="Enter reason for rejection..."
                                             value={rejectReason}
@@ -341,7 +446,7 @@ export default function LowerAuthorityDashboard() {
                                     <div className="flex gap-3">
                                         <Button
                                             onClick={() => handleApprove(selectedCert)}
-                                            className="flex-1 bg-sky-600 hover:bg-sky-700 text-white"
+                                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                                         >
                                             <CheckCircle className="h-4 w-4 mr-2" />
                                             Verify & Approve

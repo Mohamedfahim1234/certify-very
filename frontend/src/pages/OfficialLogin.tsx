@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { ShieldCheck, User, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const mockOfficials = {
   'officer1': { password: 'pass123', name: 'Amit Sharma', role: 'officer' as const },
@@ -18,24 +18,38 @@ const mockOfficials = {
 export default function OfficialLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const official = mockOfficials[username as keyof typeof mockOfficials];
-    
-    if (official && official.password === password) {
-      login({
-        id: username,
-        name: official.name,
-        role: official.role,
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post(`${API_URL}/higher-officer/login`, {
+        email: username,
+        password
       });
-      toast.success(`Welcome back, ${official.name}!`);
-      navigate('/official-dashboard');
-    } else {
+
+      if (response.status === 200) {
+        const official = response.data.user;
+        localStorage.setItem('token', response.data.token);
+        toast.success(`Welcome back, ${official.name}!`);
+        navigate('/official-dashboard');
+        return;
+      } else {
+        toast.error('Invalid credentials');
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
       toast.error('Invalid credentials');
+      setLoading(false);
+      return;
     }
   };
 

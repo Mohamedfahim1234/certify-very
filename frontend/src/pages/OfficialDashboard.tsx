@@ -39,7 +39,7 @@ interface Certificate {
 export default function OfficialDashboard() {
   const navigate = useNavigate();
   const [certificatesData, setCertificatesData] = useState<Certificate[]>([]);
-  const [selectedCert, setSelectedCert ] = useState<Certificate | null>(null);
+  const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
@@ -55,7 +55,7 @@ export default function OfficialDashboard() {
   useEffect(() => {
     const fetchCertificates = async () => {
       try {
-        const response = await axios.get(`${API_URL}/officer/certificates`, {
+        const response = await axios.get(`${API_URL}/higher-officer/certificates/list`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -63,7 +63,7 @@ export default function OfficialDashboard() {
         if (response.status === 200) {
           console.log('Fetched certificates:', response.data.certificates);
           const certificate = response.data.certificates;
-          const Certificate =  Array.isArray(certificate) ? certificate : [];
+          const Certificate = Array.isArray(certificate) ? certificate : [];
           setCertificatesData(Certificate);
         }
       } catch (error) {
@@ -76,7 +76,7 @@ export default function OfficialDashboard() {
   }, [API_URL, token]);
 
 
-  const handleApprove = async(cert: Certificate) => {
+  const handleApprove = async (cert: Certificate) => {
     try {
       const response = await axios.put(`${API_URL}/officer/certificate/${cert._id}/status`, {
         status: 'approved',
@@ -88,7 +88,7 @@ export default function OfficialDashboard() {
       if (response.status === 200) {
         toast.success('Certificate approved successfully');
         setSelectedCert(null);
-      }else{
+      } else {
         toast.error('Failed to approve certificate');
       }
     } catch (error) {
@@ -96,7 +96,7 @@ export default function OfficialDashboard() {
     }
   };
 
-  const handleReject = async(cert: Certificate) => {
+  const handleReject = async (cert: Certificate) => {
     // enforce that a rejection reason is provided
     if (!rejectReason || rejectReason.trim() === '') {
       toast.error('Please enter a rejection reason before rejecting');
@@ -127,10 +127,10 @@ export default function OfficialDashboard() {
   const pendingCerts = certificatesData.filter(c => c.status.includes('pending'));
   const approvedCerts = certificatesData.filter(c => c.status.includes('approved'));
   const rejectedCerts = certificatesData.filter(c => c.status === 'rejected');
-  
+
   const displayCerts = filterStatus === 'all' ? certificatesData :
     filterStatus === 'pending' ? pendingCerts :
-    filterStatus === 'approved' ? approvedCerts : rejectedCerts;
+      filterStatus === 'approved' ? approvedCerts : rejectedCerts;
 
   const getCertificateLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -146,7 +146,7 @@ export default function OfficialDashboard() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -155,9 +155,9 @@ export default function OfficialDashboard() {
         >
           <div>
             <h1 className="font-heading text-3xl font-bold mb-2">
-              {user === 'officer' ? 'Verifying Officer' : 
-               user === 'senior' ? 'Senior Officer' : 
-               'Higher Official'} Dashboard
+              {user === 'officer' ? 'Verifying Officer' :
+                user === 'senior' ? 'Senior Officer' :
+                  'Higher Official'} Dashboard
             </h1>
             <p className="text-muted-foreground">
               Review and approve certificate applications
