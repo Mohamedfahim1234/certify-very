@@ -30,8 +30,13 @@ export default function Profile() {
       const getUserData = async () => {
         try {
           const role = localStorage.getItem('role');
-          const profilePath = (role === 'senior' || role === 'lower') ? '/senior-officer/profile' : '/officer/profile';
-
+          let profilePath = (role === 'mid') ? '/senior-officer/profile' : '/officer/profile';
+          if (role == 'higher') {
+            profilePath = '/higher-officer/profile';
+          } else if (role == 'citizen') {
+            profilePath = '/user/profile';
+          }
+          console.log(profilePath);
           const response = await axios.get(`${API_URL}${profilePath}`, {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -39,12 +44,12 @@ export default function Profile() {
           });
 
           if (response.status === 200) {
-            const userData = response.data.user || response.data.officer || response.data;
+            const userData = response.data.user || response.data.officer || response.data.senior || response.data.higher;
             setUser(userData);
             const role = localStorage.getItem('role');
-            const isOfficer = role === 'officer' || role === 'senior';
+            const isOfficer = role === 'officer' || role === 'mid' || role === 'higher';
             // officers use `username`, regular users use `name`
-            setName(isOfficer ? (userData?.username || userData?.name || '') : (userData?.name || ''));
+            setName(userData?.username || userData?.name);
             setEmail(userData?.email || '');
           } else {
             navigate('/');
@@ -126,7 +131,8 @@ export default function Profile() {
                 <p className="text-sm text-muted-foreground capitalize">
                   {user?.role === 'citizen' ? 'Citizen' :
                     user?.role === 'officer' ? 'Verifying Officer' :
-                      user?.role === 'senior' ? 'Senior Officer' : 'Higher Official'}
+                      user?.role === 'mid' ? 'Mid Officer' :
+                        user?.role === 'higher' ? 'Higher Official' : 'Higher Official'}
                 </p>
               </div>
             </div>

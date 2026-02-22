@@ -16,6 +16,15 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+interface ApprovalHistoryItem {
+  level: string;
+  action: 'approved' | 'rejected';
+  officer: string;
+  timestamp: string | Date;
+  remarks?: string;
+  _id?: string;
+}
+
 interface Certificate {
   _id: string;
   userId: string;
@@ -27,14 +36,43 @@ interface Certificate {
   createdAt?: string | Date;
   updatedAt?: string | Date;
   rejectionReason?: string | null;
-  approvalHistory: {
-    level: string;
-    action: 'approved' | 'rejected';
-    officer: string;
-    timestamp: string | Date;
-    remarks?: string;
-  }[];
+  approvalHistory: ApprovalHistoryItem[];
+  seniorapprovalhistory: ApprovalHistoryItem[];
+  higherapprovalhistory: ApprovalHistoryItem[];
 }
+
+// Status derived from higherapprovalhistory
+const getHigherAuthorityStatus = (cert: Certificate): 'pending' | 'approved' | 'rejected' => {
+  if (cert.higherapprovalhistory && cert.higherapprovalhistory.length > 0) {
+    const entry = cert.higherapprovalhistory.find(
+      (h) => h.level === 'higher' || h.level === 'final'
+    );
+    if (entry) return entry.action === 'approved' ? 'approved' : 'rejected';
+  }
+  return 'pending';
+};
+
+// Status derived from approvalHistory (lower officer)
+const getLowerAuthorityStatus = (cert: Certificate): 'pending' | 'approved' | 'rejected' => {
+  if (cert.approvalHistory && cert.approvalHistory.length > 0) {
+    const entry = cert.approvalHistory.find(
+      (h) => h.level === 'lower' || h.level === 'officer' || h.level === 'final'
+    );
+    if (entry) return entry.action === 'approved' ? 'approved' : 'rejected';
+  }
+  return 'pending';
+};
+
+// Status derived from seniorapprovalhistory (mid officer)
+const getMidAuthorityStatus = (cert: Certificate): 'pending' | 'approved' | 'rejected' => {
+  if (cert.seniorapprovalhistory && cert.seniorapprovalhistory.length > 0) {
+    const entry = cert.seniorapprovalhistory.find(
+      (h) => h.level === 'senior' || h.level === 'mid' || h.level === 'final'
+    );
+    if (entry) return entry.action === 'approved' ? 'approved' : 'rejected';
+  }
+  return 'pending';
+};
 
 export default function OfficialDashboard() {
   const navigate = useNavigate();
@@ -78,7 +116,7 @@ export default function OfficialDashboard() {
 
   const handleApprove = async (cert: Certificate) => {
     try {
-      const response = await axios.put(`${API_URL}/officer/certificate/${cert._id}/status`, {
+      const response = await axios.put(`${API_URL}/higher-officer/certificate/status/update/${cert._id}`, {
         status: 'approved',
       }, {
         headers: {
@@ -104,7 +142,7 @@ export default function OfficialDashboard() {
     }
 
     try {
-      const response = await axios.put(`${API_URL}/officer/certificate/${cert._id}/status`, {
+      const response = await axios.put(`${API_URL}/higher-officer/certificate/status/update/${cert._id}`, {
         status: 'rejected',
         remarks: rejectReason,
       }, {
@@ -262,8 +300,10 @@ export default function OfficialDashboard() {
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-heading text-2xl">
-              Review Certificate Application
+            <DialogTitle className="font-heading text-2xl text-indigo-700 dark:text-indigo-400">
+              {selectedCert && getHigherAuthorityStatus(selectedCert) === 'pending'
+                ? 'Review Certificate Application'
+                : 'Certificate Details'}
             </DialogTitle>
           </DialogHeader>
 
@@ -289,6 +329,90 @@ export default function OfficialDashboard() {
                 </div>
               </div>
 
+              {/* Lower Authority Approval History */}
+              {selectedCert.approvalHistory && selectedCert.approvalHistory.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3 text-emerald-700 dark:text-emerald-400">Lower Authority History</h4>
+                  <div className="space-y-2">
+                    {selectedCert.approvalHistory.map((history, idx) => (
+                      <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                        : 'bg-red-50 dark:bg-red-900/20'
+                        }`}>
+                        <div className="flex items-center justify-between">
+                          <span className={`font-medium ${history.action === 'approved' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
+                            }`}>
+                            {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(history.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        {history.remarks && (
+                          <p className="text-sm mt-1 text-muted-foreground">{history.remarks}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mid / Senior Authority Approval History */}
+              {selectedCert.seniorapprovalhistory && selectedCert.seniorapprovalhistory.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3 text-amber-700 dark:text-amber-400">Mid Authority History</h4>
+                  <div className="space-y-2">
+                    {selectedCert.seniorapprovalhistory.map((history, idx) => (
+                      <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
+                        ? 'bg-amber-50 dark:bg-amber-900/20'
+                        : 'bg-red-50 dark:bg-red-900/20'
+                        }`}>
+                        <div className="flex items-center justify-between">
+                          <span className={`font-medium ${history.action === 'approved' ? 'text-amber-700 dark:text-amber-400' : 'text-red-700 dark:text-red-400'
+                            }`}>
+                            {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(history.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        {history.remarks && (
+                          <p className="text-sm mt-1 text-muted-foreground">{history.remarks}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Higher Official Approval History */}
+              {selectedCert.higherapprovalhistory && selectedCert.higherapprovalhistory.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-3 text-indigo-700 dark:text-indigo-400">Higher Official History</h4>
+                  <div className="space-y-2">
+                    {selectedCert.higherapprovalhistory.map((history, idx) => (
+                      <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
+                        ? 'bg-indigo-50 dark:bg-indigo-900/20'
+                        : 'bg-red-50 dark:bg-red-900/20'
+                        }`}>
+                        <div className="flex items-center justify-between">
+                          <span className={`font-medium ${history.action === 'approved' ? 'text-indigo-700 dark:text-indigo-400' : 'text-red-700 dark:text-red-400'
+                            }`}>
+                            {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(history.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        {history.remarks && (
+                          <p className="text-sm mt-1 text-muted-foreground">{history.remarks}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Documents */}
               <div>
                 <h4 className="font-semibold mb-3">Submitted Documents</h4>
@@ -299,7 +423,7 @@ export default function OfficialDashboard() {
                         <span className="text-sm">Document {idx + 1}</span>
                         <div className="flex gap-2">
                           <a
-                            className="btn btn-sm btn-ghost flex items-center"
+                            className="btn btn-sm btn-ghost flex items-center hover:text-indigo-600"
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -308,7 +432,7 @@ export default function OfficialDashboard() {
                             View
                           </a>
                           <a
-                            className="btn btn-sm btn-ghost flex items-center"
+                            className="btn btn-sm btn-ghost flex items-center hover:text-indigo-600"
                             href={url}
                             download
                           >
@@ -324,31 +448,11 @@ export default function OfficialDashboard() {
                 </div>
               </div>
 
-              {/* Previous Approvals */}
-              {selectedCert.approvalHistory.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-3">Previous Approvals</h4>
-                  <div className="space-y-2">
-                    {selectedCert.approvalHistory.map((entry, idx) => (
-                      <div key={idx} className="p-3 bg-muted/50 rounded-lg text-sm">
-                        <p className="font-semibold">{entry.level}</p>
-                        <p className="text-muted-foreground">
-                          {entry.action === 'approved' ? 'Approved' : 'Rejected'} by {entry.officer}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(entry.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Rejection Form */}
-              {selectedCert.status.includes('pending') && (
+              {/* Action Buttons — only when this authority's decision is still pending */}
+              {getHigherAuthorityStatus(selectedCert) === 'pending' && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Rejection Reason (optional)</Label>
+                    <Label>Rejection Reason (required for rejection)</Label>
                     <Textarea
                       placeholder="Enter reason for rejection..."
                       value={rejectReason}
@@ -360,7 +464,7 @@ export default function OfficialDashboard() {
                   <div className="flex gap-3">
                     <Button
                       onClick={() => handleApprove(selectedCert)}
-                      className="flex-1 bg-accent hover:bg-accent/90"
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Approve

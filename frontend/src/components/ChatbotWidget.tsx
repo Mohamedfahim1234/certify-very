@@ -109,7 +109,7 @@ export default function ChatbotWidget() {
   };
 
   const quickReplies = [
-    'How to Apply?',
+    'What is javascript?',
     'Steps of Verification',
     'Required Documents',
     'Track My Application',
@@ -184,14 +184,14 @@ export default function ChatbotWidget() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={`flex ${message.sender === 'user'
-                          ? 'justify-end'
-                          : 'justify-start'
+                        ? 'justify-end'
+                        : 'justify-start'
                         }`}
                     >
                       <div
                         className={`max-w-[80%] rounded-2xl px-4 py-2 ${message.sender === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-foreground'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground'
                           }`}
                       >
                         <p className="text-sm whitespace-pre-line">

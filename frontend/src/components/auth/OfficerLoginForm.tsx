@@ -48,6 +48,17 @@ export default function OfficerLoginForm() {
     }
   };
 
+  const getApiRoute = (level: AuthorityLevel) => {
+    switch (level) {
+      case 'lower':
+        return '/officer/login';
+      case 'mid':
+        return '/senior-officer/login';
+      case 'higher':
+        return '/higher-officer/login';
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -59,7 +70,7 @@ export default function OfficerLoginForm() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/higher-officer/login`, {
+      const response = await axios.post(`${API_URL}${getApiRoute(authorityLevel)}`, {
         email,
         password,
         authorityLevel
