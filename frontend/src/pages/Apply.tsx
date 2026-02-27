@@ -12,92 +12,91 @@ import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-
-const certificateTypes = [
-  { 
-    value: 'caste' as CertificateType, 
-    label: 'Caste Certificate',
-    documents: ['Aadhaar Card', 'School/Parent\'s Certificate']
-  },
-  { 
-    value: 'income' as CertificateType, 
-    label: 'Income Certificate',
-    documents: ['Aadhaar Card', 'Basic Income Declaration']
-  },
-  { 
-    value: 'domicile' as CertificateType, 
-    label: 'Domicile Certificate',
-    documents: ['Aadhaar Card', 'Address Proof (Electricity Bill or Rental Agreement)']
-  },
-  { 
-    value: 'marriage' as CertificateType, 
-    label: 'Marriage Certificate',
-    documents: ['Aadhaar Cards (Both)', 'Wedding Photo/Invitation', 'Witness ID Proof']
-  },
-  { 
-    value: 'birth' as CertificateType, 
-    label: 'Birth Certificate',
-    documents: ['Hospital Birth Slip or Parent\'s Aadhaar', 'Application Form']
-  },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Apply() {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<CertificateType | ''>('');
   const [uploads, setUploads] = useState<{ [key: string]: File | null }>({});
+  const { t } = useLanguage();
 
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem('token');
+
+  const certificateTypes = [
+    {
+      value: 'caste' as CertificateType,
+      label: t('cert_caste'),
+      documents: [t('apply_doc_aadhaar'), t('apply_doc_school_cert')]
+    },
+    {
+      value: 'income' as CertificateType,
+      label: t('cert_income'),
+      documents: [t('apply_doc_aadhaar'), t('apply_doc_income_decl')]
+    },
+    {
+      value: 'domicile' as CertificateType,
+      label: t('cert_domicile'),
+      documents: [t('apply_doc_aadhaar'), t('apply_doc_address_proof')]
+    },
+    {
+      value: 'marriage' as CertificateType,
+      label: t('cert_marriage'),
+      documents: [t('apply_doc_aadhaar_both'), t('apply_doc_wedding_photo'), t('apply_doc_witness_id')]
+    },
+    {
+      value: 'birth' as CertificateType,
+      label: t('cert_birth'),
+      documents: [t('apply_doc_birth_slip'), t('apply_doc_app_form')]
+    },
+  ];
 
   const selectedCertificate = certificateTypes.find(c => c.value === selectedType);
 
   const handleFileUpload = (docName: string, file: File | null) => {
     if (file) {
-      // Validate file
       const validTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 10 * 1024 * 1024;
 
       if (!validTypes.includes(file.type)) {
-        toast.error('Only PDF, JPEG, and PNG files are allowed');
+        toast.error(t('apply_file_invalid'));
         return;
       }
 
       if (file.size > maxSize) {
-        toast.error('File size must not exceed 10MB');
+        toast.error(t('apply_file_too_large'));
         return;
       }
 
       setUploads(prev => ({ ...prev, [docName]: file }));
-      toast.success(`${file.name} uploaded successfully`);
+      toast.success(`${file.name} ${t('apply_uploaded')}`);
     }
   };
 
-  const handleSubmit = async(e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Submitting application for:', selectedType, uploads);
-    if (!selectedType ) return;
+    if (!selectedType) return;
 
     const requiredDocs = selectedCertificate?.documents || [];
     const missingDocs = requiredDocs.filter(doc => !uploads[doc]);
 
     if (missingDocs.length > 0) {
-      toast.error(`Please upload: ${missingDocs.join(', ')}`);
+      toast.error(`${t('apply_missing_docs')} ${missingDocs.join(', ')}`);
       return;
     }
 
     try {
 
-       const form = new FormData();
-    form.append("certificateType", selectedType);
+      const form = new FormData();
+      form.append("certificateType", selectedType);
 
-    // Append all uploaded files under the same key `documentUrl`
-    // (we no longer send a separate `aadharUrl` field)
-    Object.keys(uploads).forEach((key) => {
-      const file = uploads[key];
-      if (file) {
-        form.append('documentUrl', file as File);
-      }
-    });
+      Object.keys(uploads).forEach((key) => {
+        const file = uploads[key];
+        if (file) {
+          form.append('documentUrl', file as File);
+        }
+      });
 
       const response = await axios.post(`${API_URL}/user/apply-certificate`, form, {
         headers: {
@@ -106,14 +105,14 @@ export default function Apply() {
         }
       });
       if (response.status !== 200) {
-        toast.error('Failed to submit application. Please try again.');
+        toast.error(t('apply_submit_failed'));
         return;
       }
-      toast.success('Documents uploaded successfully');
+      toast.success(t('apply_upload_success'));
       navigate('/my-certificates');
     } catch (error) {
       console.error('Error uploading documents:', error);
-      toast.error('An error occurred while uploading documents. Please try again.');
+      toast.error(t('apply_upload_error'));
       return;
     }
 
@@ -122,7 +121,7 @@ export default function Apply() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -130,9 +129,9 @@ export default function Apply() {
           className="max-w-3xl mx-auto space-y-6"
         >
           <div>
-            <h1 className="font-heading text-3xl font-bold mb-2">Apply for Certificate</h1>
+            <h1 className="font-heading text-3xl font-bold mb-2">{t('apply_title')}</h1>
             <p className="text-muted-foreground">
-              Select certificate type and upload required documents
+              {t('apply_desc')}
             </p>
           </div>
 
@@ -140,13 +139,13 @@ export default function Apply() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Certificate Type Selection */}
               <div className="space-y-2">
-                <Label>Certificate Type</Label>
+                <Label>{t('apply_cert_type')}</Label>
                 <Select value={selectedType} onValueChange={(value) => {
                   setSelectedType(value as CertificateType);
                   setUploads({});
                 }}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a certificate type" />
+                    <SelectValue placeholder={t('apply_select_cert')} />
                   </SelectTrigger>
                   <SelectContent>
                     {certificateTypes.map((cert) => (
@@ -170,7 +169,7 @@ export default function Apply() {
                     <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                       <h3 className="font-semibold mb-2 flex items-center gap-2">
                         <AlertCircle className="h-5 w-5 text-primary" />
-                        Required Documents
+                        {t('apply_required_docs')}
                       </h3>
                       <ul className="text-sm text-muted-foreground space-y-1">
                         {selectedCertificate.documents.map((doc) => (
@@ -200,10 +199,10 @@ export default function Apply() {
                               <div className="space-y-2">
                                 <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
                                 <p className="text-sm text-muted-foreground">
-                                  Click to upload or drag and drop
+                                  {t('apply_upload_hint')}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  PDF, JPEG, PNG (max 10MB)
+                                  {t('apply_file_types')}
                                 </p>
                               </div>
                             )}
@@ -222,7 +221,7 @@ export default function Apply() {
                 disabled={!selectedType || Object.keys(uploads).length === 0}
               >
                 <FileText className="h-5 w-5 mr-2" />
-                Submit Application
+                {t('apply_submit')}
               </Button>
             </form>
           </Card>

@@ -4,12 +4,15 @@ import { FileCheck, Moon, Sun, LogOut, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSelector from '@/components/LanguageSelector';
 
 export const Navbar = () => {
   const location = useLocation();
   const [isDark, setIsDark] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const user = localStorage.getItem('role');
 
@@ -19,25 +22,25 @@ export const Navbar = () => {
   };
 
   const citizenLinks = [
-    { to: '/dashboard', label: 'Home' },
-    { to: '/apply', label: 'Apply' },
-    { to: '/my-certificates', label: 'My Certificates' },
-    { to: '/profile', label: 'Profile' },
+    { to: '/dashboard', label: t('nav_home') },
+    { to: '/apply', label: t('nav_apply') },
+    { to: '/my-certificates', label: t('nav_my_certificates') },
+    { to: '/profile', label: t('nav_profile') },
   ];
 
   const lowerOfficerLinks = [
-    { to: '/official-dashboard/lower', label: 'Dashboard' },
-    { to: '/profile', label: 'Profile' },
+    { to: '/official-dashboard/lower', label: t('nav_dashboard') },
+    { to: '/profile', label: t('nav_profile') },
   ];
 
   const midOfficerLinks = [
-    { to: '/official-dashboard/mid', label: 'Dashboard' },
-    { to: '/profile', label: 'Profile' },
+    { to: '/official-dashboard/mid', label: t('nav_dashboard') },
+    { to: '/profile', label: t('nav_profile') },
   ];
 
   const higherOfficerLinks = [
-    { to: '/official-dashboard', label: 'Dashboard' },
-    { to: '/profile', label: 'Profile' },
+    { to: '/official-dashboard', label: t('nav_dashboard') },
+    { to: '/profile', label: t('nav_profile') },
   ];
 
   const links = user === 'citizen' ? citizenLinks :
@@ -57,9 +60,9 @@ export const Navbar = () => {
               </div>
               <div className="hidden md:block">
                 <h1 className="font-heading font-bold text-lg leading-none text-primary">
-                  CertifyGov
+                  {t('nav_certifygov')}
                 </h1>
-                <p className="text-xs text-muted-foreground">Digital Certificate System</p>
+                <p className="text-xs text-muted-foreground">{t('nav_digital_cert')}</p>
               </div>
             </Link>
           </div>
@@ -83,6 +86,7 @@ export const Navbar = () => {
 
           {/* Actions */}
           <div className="flex-1 flex justify-end items-center gap-2">
+            <LanguageSelector />
             <Button
               variant="ghost"
               size="icon"
@@ -105,7 +109,7 @@ export const Navbar = () => {
                     }
                   }
                   className="hidden md:flex rounded-full"
-                  title="Logout"
+                  title={t('nav_logout')}
                 >
                   <LogOut className="h-5 w-5" />
                 </Button>
@@ -153,7 +157,7 @@ export const Navbar = () => {
                 }}
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                {t('nav_logout')}
               </Button>
             </motion.div>
           )}

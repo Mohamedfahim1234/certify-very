@@ -8,27 +8,29 @@ import { FileText, Search, MessageCircle, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useLanguage } from '@/contexts/LanguageContext';
 
-interface certificate{
-   userId: String,
-    certificateType: String,
-    aadharUrl: String,
-    documentUrl: String,
-    status:String , enum: ['pending', 'approved', 'rejected'],
-    appliedAt: Date,
-    createdAt: Date,
-    updatedAt: Date
+interface certificate {
+  userId: String,
+  certificateType: String,
+  aadharUrl: String,
+  documentUrl: String,
+  status: String, enum: ['pending', 'approved', 'rejected'],
+  appliedAt: Date,
+  createdAt: Date,
+  updatedAt: Date
 }
 
 export default function Dashboard() {
-  const [user, setUser ] = useState<any>(null);
-  const [certificates, setCertificates ] = useState<certificate[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [certificates, setCertificates] = useState<certificate[]>([]);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    
+
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
 
@@ -37,7 +39,7 @@ export default function Dashboard() {
       navigate('/');
     }
 
-    if(role !== 'citizen'){
+    if (role !== 'citizen') {
       console.log('Unauthorized role, redirecting to login');
       navigate('/');
     }
@@ -76,7 +78,7 @@ export default function Dashboard() {
         }
 
       } catch (error) {
-        
+
       }
     }
 
@@ -89,10 +91,10 @@ export default function Dashboard() {
   const approvedCount = certificates.filter(c => c.status.includes('approved')).length || 0;
   console.log('Approved Count:', approvedCount);
 
-  return ( 
+  return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -102,10 +104,10 @@ export default function Dashboard() {
           {/* Welcome Section */}
           <div className="glass-card p-8 gradient-primary text-white rounded-2xl">
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-2">
-              Welcome back, {user?.name}! 👋
+              {t('dashboard_welcome')} {user?.name}! 👋
             </h1>
             <p className="text-white/90 text-lg">
-              Apply for your certificates securely and track them in real time
+              {t('dashboard_subtitle')}
             </p>
           </div>
 
@@ -117,7 +119,7 @@ export default function Dashboard() {
                   <FileText className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Applications</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard_total')}</p>
                   <p className="text-2xl font-bold">{certificates.length}</p>
                 </div>
               </div>
@@ -129,7 +131,7 @@ export default function Dashboard() {
                   <TrendingUp className="h-6 w-6 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard_pending')}</p>
                   <p className="text-2xl font-bold">{pendingCount}</p>
                 </div>
               </div>
@@ -141,7 +143,7 @@ export default function Dashboard() {
                   <Search className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Approved</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard_approved')}</p>
                   <p className="text-2xl font-bold">{approvedCount}</p>
                 </div>
               </div>
@@ -156,8 +158,8 @@ export default function Dashboard() {
                   <FileText className="h-8 w-8 text-primary group-hover:text-white" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-semibold text-lg mb-1">Apply for Certificate</h3>
-                  <p className="text-sm text-muted-foreground">Submit a new certificate application</p>
+                  <h3 className="font-heading font-semibold text-lg mb-1">{t('dashboard_apply')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('dashboard_apply_desc')}</p>
                 </div>
               </div>
             </Card>
@@ -168,8 +170,8 @@ export default function Dashboard() {
                   <Search className="h-8 w-8 text-accent group-hover:text-white" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-semibold text-lg mb-1">My Certificates</h3>
-                  <p className="text-sm text-muted-foreground">Track your application status</p>
+                  <h3 className="font-heading font-semibold text-lg mb-1">{t('dashboard_my_certs')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('dashboard_my_certs_desc')}</p>
                 </div>
               </div>
             </Card>
@@ -180,12 +182,12 @@ export default function Dashboard() {
             <div className="flex items-start gap-4">
               <MessageCircle className="h-6 w-6 text-primary mt-1" />
               <div>
-                <h3 className="font-semibold text-lg mb-2">Need Help?</h3>
+                <h3 className="font-semibold text-lg mb-2">{t('dashboard_need_help')}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Our Certificate Assistant is here to help you with any questions about the application process.
+                  {t('dashboard_help_desc')}
                 </p>
                 <Button variant="outline" size="sm">
-                  Open Chatbot
+                  {t('dashboard_open_chatbot')}
                 </Button>
               </div>
             </div>

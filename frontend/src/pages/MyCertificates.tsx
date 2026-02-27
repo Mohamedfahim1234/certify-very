@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { Eye, Download, FileText } from 'lucide-react';
 import axios from 'axios';
 import { CertificateStatus } from '@/contexts/CertificateContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ApprovalHistoryItem {
   level: string;
@@ -43,17 +44,18 @@ interface StatusBadgeProps {
 export default function MyCertificates() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const { t } = useLanguage();
 
   const token = localStorage.getItem('token');
   const API_URL = import.meta.env.VITE_API_URL;
 
   const getCertificateLabel = (type: string) => {
     const labels: Record<string, string> = {
-      caste: 'Caste Certificate',
-      income: 'Income Certificate',
-      domicile: 'Domicile Certificate',
-      marriage: 'Marriage Certificate',
-      birth: 'Birth Certificate',
+      caste: t('cert_caste'),
+      income: t('cert_income'),
+      domicile: t('cert_domicile'),
+      marriage: t('cert_marriage'),
+      birth: t('cert_birth'),
     };
     return labels[type] || type;
   };
@@ -109,21 +111,21 @@ export default function MyCertificates() {
           className="space-y-6"
         >
           <div>
-            <h1 className="font-heading text-3xl font-bold mb-2">My Certificates</h1>
+            <h1 className="font-heading text-3xl font-bold mb-2">{t('mycerts_title')}</h1>
             <p className="text-muted-foreground">
-              Track the status of all your certificate applications
+              {t('mycerts_desc')}
             </p>
           </div>
 
           {certificates.length === 0 ? (
             <Card className="glass-card p-12 text-center">
               <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="font-heading text-xl font-semibold mb-2">No Applications Yet</h3>
+              <h3 className="font-heading text-xl font-semibold mb-2">{t('mycerts_no_certs')}</h3>
               <p className="text-muted-foreground mb-6">
-                You haven't submitted any certificate applications
+                {t('mycerts_no_certs_desc')}
               </p>
               <Button onClick={() => window.location.href = '/apply'}>
-                Apply for Certificate
+                {t('mycerts_apply_now')}
               </Button>
             </Card>
           ) : (
@@ -157,7 +159,7 @@ export default function MyCertificates() {
                             onClick={() => handleDownloadAll(cert)}
                           >
                             <Download className="h-4 w-4 mr-2" />
-                            Download Certificate
+                            {t('mycerts_view_details')}
                           </Button>
                         )}
                         <Button
@@ -165,7 +167,7 @@ export default function MyCertificates() {
                           onClick={() => setSelectedCert(cert)}
                         >
                           <Eye className="h-4 w-4 mr-2" />
-                          View Details
+                          {t('mycerts_view_details')}
                         </Button>
                       </div>
                     </div>

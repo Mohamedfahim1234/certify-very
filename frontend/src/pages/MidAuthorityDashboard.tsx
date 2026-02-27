@@ -15,6 +15,7 @@ import { Eye, CheckCircle, XCircle, Search, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ApprovalHistoryItem {
     level: string;
@@ -80,6 +81,7 @@ export default function MidAuthorityDashboard() {
     const [rejectReason, setRejectReason] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+    const { t } = useLanguage();
 
     const API_URL = import.meta.env.VITE_API_URL;
     const token = localStorage.getItem('token');
@@ -208,11 +210,11 @@ export default function MidAuthorityDashboard() {
 
     const getCertificateLabel = (type: string) => {
         const labels: Record<string, string> = {
-            caste: 'Caste Certificate',
-            income: 'Income Certificate',
-            domicile: 'Domicile Certificate',
-            marriage: 'Marriage Certificate',
-            birth: 'Birth Certificate',
+            caste: t('cert_caste'),
+            income: t('cert_income'),
+            domicile: t('cert_domicile'),
+            marriage: t('cert_marriage'),
+            birth: t('cert_birth'),
         };
         return labels[type] || type;
     };
@@ -229,25 +231,25 @@ export default function MidAuthorityDashboard() {
                 >
                     <div>
                         <h1 className="font-heading text-3xl font-bold mb-2 text-amber-700 dark:text-amber-400">
-                            Mid Authority Dashboard
+                            {t('official_dashboard_title')}
                         </h1>
                         <p className="text-muted-foreground">
-                            Secondary review and approval of certificates
+                            {t('official_certificate_queue')}
                         </p>
                     </div>
 
                     {/* Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <Card className="glass-card p-6 border-l-4 border-l-amber-500">
-                            <p className="text-sm text-muted-foreground mb-1">Pending Approval</p>
+                            <p className="text-sm text-muted-foreground mb-1">{t('official_total_pending')}</p>
                             <p className="text-3xl font-bold text-amber-600">{pendingCerts.length}</p>
                         </Card>
                         <Card className="glass-card p-6 border-l-4 border-l-orange-500">
-                            <p className="text-sm text-muted-foreground mb-1">Approved</p>
+                            <p className="text-sm text-muted-foreground mb-1">{t('status_approved')}</p>
                             <p className="text-3xl font-bold text-orange-600">{approvedCerts.length}</p>
                         </Card>
                         <Card className="glass-card p-6 border-l-4 border-l-rose-500">
-                            <p className="text-sm text-muted-foreground mb-1">Rejected</p>
+                            <p className="text-sm text-muted-foreground mb-1">{t('status_rejected')}</p>
                             <p className="text-3xl font-bold text-rose-600">{rejectedCerts.length}</p>
                         </Card>
                     </div>
@@ -281,12 +283,12 @@ export default function MidAuthorityDashboard() {
                             <table className="w-full">
                                 <thead className="bg-muted/50">
                                     <tr>
-                                        <th className="text-left p-4 font-semibold">Certificate ID</th>
-                                        <th className="text-left p-4 font-semibold">Applicant</th>
-                                        <th className="text-left p-4 font-semibold">Type</th>
-                                        <th className="text-left p-4 font-semibold">Date</th>
-                                        <th className="text-left p-4 font-semibold">Lower Auth</th>
-                                        <th className="text-left p-4 font-semibold">Mid Auth Status</th>
+                                        <th className="text-left p-4 font-semibold">ID</th>
+                                        <th className="text-left p-4 font-semibold">{t('official_applicant')}</th>
+                                        <th className="text-left p-4 font-semibold">{t('mycerts_type')}</th>
+                                        <th className="text-left p-4 font-semibold">{t('mycerts_applied_on')}</th>
+                                        <th className="text-left p-4 font-semibold">{t('officer_lower')}</th>
+                                        <th className="text-left p-4 font-semibold">{t('mycerts_status')}</th>
                                         <th className="text-left p-4 font-semibold">Actions</th>
                                     </tr>
                                 </thead>
@@ -304,20 +306,20 @@ export default function MidAuthorityDashboard() {
                                                 </td>
                                                 <td className="p-4">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lowerStatus === 'approved'
-                                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                            : lowerStatus === 'rejected'
-                                                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                        : lowerStatus === 'rejected'
+                                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
                                                         }`}>
                                                         {lowerStatus === 'approved' ? 'Verified' : lowerStatus === 'rejected' ? 'Rejected' : 'Pending'}
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${midStatus === 'approved'
-                                                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
-                                                            : midStatus === 'rejected'
-                                                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                                                        : midStatus === 'rejected'
+                                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                                                         }`}>
                                                         {midStatus === 'approved' ? 'Approved' : midStatus === 'rejected' ? 'Rejected' : 'Pending'}
                                                     </span>
@@ -395,8 +397,8 @@ export default function MidAuthorityDashboard() {
                                     <div className="space-y-2">
                                         {selectedCert.approvalHistory.map((history, idx) => (
                                             <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
-                                                    ? 'bg-emerald-50 dark:bg-emerald-900/20'
-                                                    : 'bg-red-50 dark:bg-red-900/20'
+                                                ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                                                : 'bg-red-50 dark:bg-red-900/20'
                                                 }`}>
                                                 <div className="flex items-center justify-between">
                                                     <span className={`font-medium ${history.action === 'approved' ? 'text-emerald-700' : 'text-red-700'
@@ -423,8 +425,8 @@ export default function MidAuthorityDashboard() {
                                     <div className="space-y-2">
                                         {selectedCert.seniorapprovalhistory.map((history, idx) => (
                                             <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
-                                                    ? 'bg-amber-50 dark:bg-amber-900/20'
-                                                    : 'bg-red-50 dark:bg-red-900/20'
+                                                ? 'bg-amber-50 dark:bg-amber-900/20'
+                                                : 'bg-red-50 dark:bg-red-900/20'
                                                 }`}>
                                                 <div className="flex items-center justify-between">
                                                     <span className={`font-medium ${history.action === 'approved' ? 'text-amber-700' : 'text-red-700'
@@ -483,9 +485,9 @@ export default function MidAuthorityDashboard() {
                             {getMidAuthorityStatus(selectedCert) === 'pending' && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Rejection Reason (required for rejection)</Label>
+                                        <Label>{t('official_remarks')}</Label>
                                         <Textarea
-                                            placeholder="Enter reason for rejection..."
+                                            placeholder={t('official_remarks_placeholder')}
                                             value={rejectReason}
                                             onChange={(e) => setRejectReason(e.target.value)}
                                             rows={3}
@@ -498,7 +500,7 @@ export default function MidAuthorityDashboard() {
                                             className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
                                         >
                                             <CheckCircle className="h-4 w-4 mr-2" />
-                                            Approve
+                                            {t('official_approve')}
                                         </Button>
                                         <Button
                                             onClick={() => handleReject(selectedCert)}
@@ -508,7 +510,7 @@ export default function MidAuthorityDashboard() {
                                             title={rejectReason.trim() === '' ? 'Enter rejection reason to enable' : 'Reject application'}
                                         >
                                             <XCircle className="h-4 w-4 mr-2" />
-                                            Reject
+                                            {t('official_reject')}
                                         </Button>
                                     </div>
                                 </div>

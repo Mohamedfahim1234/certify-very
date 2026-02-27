@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import axios from 'axios'
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Message {
   id: string;
@@ -29,11 +30,12 @@ const askRagAPI = async (query: string) => {
 };
 
 export default function ChatbotWidget() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hi! I'm your Certificate Assistant 🤖. I can guide you on applying, checking status, or understanding each step. How can I help you today?",
+      text: t('chatbot_greeting'),
       sender: 'bot',
       timestamp: new Date(),
     },
@@ -58,7 +60,7 @@ export default function ChatbotWidget() {
       ...prev,
       {
         id: loadingId,
-        text: 'Thinking...',
+        text: t('chatbot_thinking'),
         sender: 'bot',
         timestamp: new Date(),
       },
@@ -67,7 +69,7 @@ export default function ChatbotWidget() {
     try {
       const data = await askRagAPI(reply);
 
-      let botText = "Sorry, we don't have information related to this.";
+      let botText = t('chatbot_no_info');
 
       if (data?.result?.length) {
         botText = data.result.map((r: any) => r.text).join('\n\n');
@@ -88,7 +90,7 @@ export default function ChatbotWidget() {
           msg.id === loadingId
             ? {
               ...msg,
-              text: 'Server error. Please try again later.',
+              text: t('chatbot_error'),
               timestamp: new Date(),
             }
             : msg
@@ -101,7 +103,7 @@ export default function ChatbotWidget() {
     setMessages([
       {
         id: '1',
-        text: "Hi! I'm your Certificate Assistant 🤖. I can guide you on applying, checking status, or understanding each step. How can I help you today?",
+        text: t('chatbot_greeting'),
         sender: 'bot',
         timestamp: new Date(),
       },
@@ -109,11 +111,11 @@ export default function ChatbotWidget() {
   };
 
   const quickReplies = [
-    'What is javascript?',
-    'Steps of Verification',
-    'Required Documents',
-    'Track My Application',
-    'Website Help',
+    t('chatbot_q1'),
+    t('chatbot_q2'),
+    t('chatbot_q3'),
+    t('chatbot_q4'),
+    t('chatbot_q5'),
   ];
 
   return (
@@ -153,7 +155,7 @@ export default function ChatbotWidget() {
               <div className="bg-primary text-primary-foreground p-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
-                  <h3 className="font-semibold">Certificate Assistant 🤖</h3>
+                  <h3 className="font-semibold">{t('chatbot_title')}</h3>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -212,7 +214,7 @@ export default function ChatbotWidget() {
               {/* Quick Replies */}
               <div className="p-4 bg-muted/50 border-t">
                 <p className="text-xs text-muted-foreground mb-2">
-                  Quick Options:
+                  {t('chatbot_quick_options')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {quickReplies.map((reply) => (

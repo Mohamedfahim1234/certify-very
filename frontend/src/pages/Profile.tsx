@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { User, Mail, Phone, LogOut, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -20,6 +21,7 @@ export default function Profile() {
   const [user, setUser] = useState<any>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const { t } = useLanguage();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -48,7 +50,6 @@ export default function Profile() {
             setUser(userData);
             const role = localStorage.getItem('role');
             const isOfficer = role === 'officer' || role === 'mid' || role === 'higher';
-            // officers use `username`, regular users use `name`
             setName(userData?.username || userData?.name);
             setEmail(userData?.email || '');
           } else {
@@ -85,7 +86,7 @@ export default function Profile() {
           });
 
         if (response.status === 200) {
-          toast.success('Profile updated successfully!');
+          toast.success(t('profile_saved'));
         } else {
           navigate('/');
         }
@@ -99,8 +100,15 @@ export default function Profile() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    toast.success('Logged out successfully');
+    toast.success(t('profile_logged_out'));
     navigate('/login');
+  };
+
+  const getRoleLabel = () => {
+    if (user?.role === 'citizen') return t('profile_role_citizen');
+    if (user?.role === 'officer') return t('profile_role_officer');
+    if (user?.role === 'mid') return t('profile_role_mid');
+    return t('profile_role_higher');
   };
 
   return (
@@ -114,9 +122,9 @@ export default function Profile() {
           className="max-w-2xl mx-auto space-y-6"
         >
           <div>
-            <h1 className="font-heading text-3xl font-bold mb-2">Profile Settings</h1>
+            <h1 className="font-heading text-3xl font-bold mb-2">{t('profile_title')}</h1>
             <p className="text-muted-foreground">
-              Manage your account information
+              {t('profile_desc')}
             </p>
           </div>
 
@@ -129,10 +137,7 @@ export default function Profile() {
               <div>
                 <h3 className="font-semibold text-lg">{name || user?.username || user?.name}</h3>
                 <p className="text-sm text-muted-foreground capitalize">
-                  {user?.role === 'citizen' ? 'Citizen' :
-                    user?.role === 'officer' ? 'Verifying Officer' :
-                      user?.role === 'mid' ? 'Mid Officer' :
-                        user?.role === 'higher' ? 'Higher Official' : 'Higher Official'}
+                  {getRoleLabel()}
                 </p>
               </div>
             </div>
@@ -142,7 +147,7 @@ export default function Profile() {
             {/* Profile Form */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">{t('profile_name')}</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -156,7 +161,7 @@ export default function Profile() {
 
               {user?.phone && (
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">{t('profile_phone')}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -167,13 +172,13 @@ export default function Profile() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Phone number cannot be changed
+                    {t('profile_phone_readonly')}
                   </p>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t('profile_email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -182,39 +187,39 @@ export default function Profile() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
-                    placeholder="your.email@example.com"
+                    placeholder={t('profile_email_placeholder')}
                   />
                 </div>
               </div>
 
               <Button onClick={handleSave} className="w-full">
                 <Save className="h-4 w-4 mr-2" />
-                Save Changes
+                {t('profile_save')}
               </Button>
             </div>
           </Card>
 
           {/* Danger Zone */}
           <Card className="glass-card p-6 border-destructive/50">
-            <h3 className="font-semibold text-lg mb-4 text-destructive">Danger Zone</h3>
+            <h3 className="font-semibold text-lg mb-4 text-destructive">{t('profile_danger')}</h3>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full">
                   <LogOut className="h-4 w-4 mr-2" />
-                  Logout
+                  {t('profile_logout')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('profile_logout_confirm')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    You will be logged out of your account and redirected to the login page.
+                    {t('profile_logout_desc')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t('profile_cancel')}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleLogout}>
-                    Logout
+                    {t('profile_logout')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

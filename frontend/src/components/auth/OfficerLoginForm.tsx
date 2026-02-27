@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, User, Lock, Eye, EyeOff, Loader2, AlertTriangle, ChevronLeft, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const mockOfficials = {
   'officer1': { password: 'pass123', name: 'Amit Sharma', role: 'officer' as const },
@@ -18,12 +19,6 @@ const mockOfficials = {
 };
 
 type AuthorityLevel = 'lower' | 'mid' | 'higher';
-
-const authorityOptions = [
-  { value: 'lower', label: 'Lower Authority', description: 'Field-level verification', color: 'text-emerald-500' },
-  { value: 'mid', label: 'Mid Authority', description: 'Supervisory verification', color: 'text-amber-500' },
-  { value: 'higher', label: 'Higher Authority', description: 'Final approval', color: 'text-purple-500' },
-];
 
 export default function OfficerLoginForm() {
   const [email, setEmail] = useState('');
@@ -34,8 +29,15 @@ export default function OfficerLoginForm() {
   const [loading, setLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const API_URL = import.meta.env.VITE_API_URL;
+
+  const authorityOptions = [
+    { value: 'lower', label: t('officer_lower'), description: t('officer_lower_desc'), color: 'text-emerald-500' },
+    { value: 'mid', label: t('officer_mid'), description: t('officer_mid_desc'), color: 'text-amber-500' },
+    { value: 'higher', label: t('officer_higher'), description: t('officer_higher_desc'), color: 'text-purple-500' },
+  ];
 
   const getDashboardRoute = (level: AuthorityLevel) => {
     switch (level) {
@@ -63,7 +65,7 @@ export default function OfficerLoginForm() {
     e.preventDefault();
 
     if (loginAttempts >= 3 && !captchaVerified) {
-      toast.error('Please verify CAPTCHA after multiple failed attempts');
+      toast.error(t('officer_captcha_required'));
       return;
     }
 
@@ -88,7 +90,7 @@ export default function OfficerLoginForm() {
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('Invalid credentials');
+      toast.error(t('officer_invalid_creds'));
       setLoginAttempts(prev => prev + 1);
       setLoading(false);
       return;
@@ -118,7 +120,7 @@ export default function OfficerLoginForm() {
             className="flex items-center"
           >
             <ChevronLeft className="mr-2 h-4 w-4" />
-            Back to Home
+            {t('login_back_home')}
           </motion.div>
         </Button>
 
@@ -132,19 +134,19 @@ export default function OfficerLoginForm() {
               <div className="inline-flex p-4 rounded-full bg-accent/10 mb-4">
                 <ShieldCheck className="h-10 w-10 text-accent" />
               </div>
-              <h1 className="font-heading text-3xl font-bold">Officer Login</h1>
-              <p className="text-muted-foreground">Secure access for verification officers</p>
+              <h1 className="font-heading text-3xl font-bold">{t('officer_login_title')}</h1>
+              <p className="text-muted-foreground">{t('officer_login_desc')}</p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
               {/* Authority Level Selector */}
               <div className="space-y-2">
-                <Label htmlFor="authority">Authority Level</Label>
+                <Label htmlFor="authority">{t('officer_authority_level')}</Label>
                 <Select value={authorityLevel} onValueChange={(value: AuthorityLevel) => setAuthorityLevel(value)}>
                   <SelectTrigger className="w-full">
                     <div className="flex items-center gap-2">
                       <Building2 className={`h-4 w-4 ${selectedAuthority?.color}`} />
-                      <SelectValue placeholder="Select authority level" />
+                      <SelectValue placeholder={t('officer_select_authority')} />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
@@ -161,13 +163,13 @@ export default function OfficerLoginForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('login_email')}</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t('officer_email_placeholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
@@ -177,13 +179,13 @@ export default function OfficerLoginForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('officer_password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
+                    placeholder={t('officer_password_placeholder')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
@@ -216,7 +218,7 @@ export default function OfficerLoginForm() {
                       htmlFor="captcha"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      I'm not a robot
+                      {t('login_captcha')}
                     </label>
                   </div>
                 </motion.div>
@@ -226,12 +228,12 @@ export default function OfficerLoginForm() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in...
+                    {t('officer_logging_in')}
                   </>
                 ) : (
                   <>
                     <ShieldCheck className="mr-2 h-4 w-4" />
-                    Login as {selectedAuthority?.label || 'Officer'}
+                    {t('officer_login_as')} {selectedAuthority?.label || 'Officer'}
                   </>
                 )}
               </Button>
@@ -241,7 +243,7 @@ export default function OfficerLoginForm() {
             <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
               <p className="text-sm text-destructive">
-                ⚠ Authorized Officers Only. All actions are logged and monitored.
+                {t('officer_security_warning')}
               </p>
             </div>
 
@@ -252,24 +254,14 @@ export default function OfficerLoginForm() {
                 onClick={() => navigate('/reset-password')}
                 className="text-sm"
               >
-                Forgot Password?
+                {t('officer_forgot_password')}
               </Button>
-            </div>
-
-            {/* Demo Credentials */}
-            <div className="bg-muted/50 rounded-lg p-4 text-sm">
-              <p className="font-semibold mb-2">Demo Credentials:</p>
-              <div className="space-y-1 text-muted-foreground">
-                <p><span className="text-emerald-500">Lower:</span> lower@example.com / pass123</p>
-                <p><span className="text-amber-500">Mid:</span> mid@example.com / pass123</p>
-                <p><span className="text-purple-500">Higher:</span> higher@example.com / pass123</p>
-              </div>
             </div>
 
             <div className="pt-4 text-center text-xs text-muted-foreground border-t">
               <div className="inline-flex items-center gap-1">
                 <Lock className="h-3 w-3" />
-                Secure Login
+                {t('login_secure')}
               </div>
             </div>
           </Card>

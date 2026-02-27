@@ -15,6 +15,7 @@ import { Eye, CheckCircle, XCircle, Search, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ApprovalHistoryItem {
   level: string;
@@ -81,6 +82,7 @@ export default function OfficialDashboard() {
   const [rejectReason, setRejectReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const { t } = useLanguage();
 
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem('token');
@@ -172,11 +174,11 @@ export default function OfficialDashboard() {
 
   const getCertificateLabel = (type: string) => {
     const labels: Record<string, string> = {
-      caste: 'Caste Certificate',
-      income: 'Income Certificate',
-      domicile: 'Domicile Certificate',
-      marriage: 'Marriage Certificate',
-      birth: 'Birth Certificate',
+      caste: t('cert_caste'),
+      income: t('cert_income'),
+      domicile: t('cert_domicile'),
+      marriage: t('cert_marriage'),
+      birth: t('cert_birth'),
     };
     return labels[type] || type;
   };
@@ -193,27 +195,25 @@ export default function OfficialDashboard() {
         >
           <div>
             <h1 className="font-heading text-3xl font-bold mb-2">
-              {user === 'officer' ? 'Verifying Officer' :
-                user === 'senior' ? 'Senior Officer' :
-                  'Higher Official'} Dashboard
+              {t('official_dashboard_title')}
             </h1>
             <p className="text-muted-foreground">
-              Review and approve certificate applications
+              {t('official_certificate_queue')}
             </p>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="glass-card p-6">
-              <p className="text-sm text-muted-foreground mb-1">Pending Review</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('official_total_pending')}</p>
               <p className="text-3xl font-bold text-amber-600">{pendingCerts.length}</p>
             </Card>
             <Card className="glass-card p-6">
-              <p className="text-sm text-muted-foreground mb-1">Approved</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('status_approved')}</p>
               <p className="text-3xl font-bold text-accent">{approvedCerts.length}</p>
             </Card>
             <Card className="glass-card p-6">
-              <p className="text-sm text-muted-foreground mb-1">Rejected</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('status_rejected')}</p>
               <p className="text-3xl font-bold text-destructive">{rejectedCerts.length}</p>
             </Card>
           </div>
@@ -247,11 +247,11 @@ export default function OfficialDashboard() {
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="text-left p-4 font-semibold">Certificate ID</th>
-                    <th className="text-left p-4 font-semibold">Applicant</th>
-                    <th className="text-left p-4 font-semibold">Type</th>
-                    <th className="text-left p-4 font-semibold">Date</th>
-                    <th className="text-left p-4 font-semibold">Status</th>
+                    <th className="text-left p-4 font-semibold">ID</th>
+                    <th className="text-left p-4 font-semibold">{t('official_applicant')}</th>
+                    <th className="text-left p-4 font-semibold">{t('mycerts_type')}</th>
+                    <th className="text-left p-4 font-semibold">{t('mycerts_applied_on')}</th>
+                    <th className="text-left p-4 font-semibold">{t('mycerts_status')}</th>
                     <th className="text-left p-4 font-semibold">Actions</th>
                   </tr>
                 </thead>
@@ -452,9 +452,9 @@ export default function OfficialDashboard() {
               {getHigherAuthorityStatus(selectedCert) === 'pending' && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Rejection Reason (required for rejection)</Label>
+                    <Label>{t('official_remarks')}</Label>
                     <Textarea
-                      placeholder="Enter reason for rejection..."
+                      placeholder={t('official_remarks_placeholder')}
                       value={rejectReason}
                       onChange={(e) => setRejectReason(e.target.value)}
                       rows={3}
@@ -467,7 +467,7 @@ export default function OfficialDashboard() {
                       className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve
+                      {t('official_approve')}
                     </Button>
                     <Button
                       onClick={() => handleReject(selectedCert)}
@@ -477,7 +477,7 @@ export default function OfficialDashboard() {
                       title={rejectReason.trim() === '' ? 'Enter rejection reason to enable' : 'Reject application'}
                     >
                       <XCircle className="h-4 w-4 mr-2" />
-                      Reject
+                      {t('official_reject')}
                     </Button>
                   </div>
                 </div>

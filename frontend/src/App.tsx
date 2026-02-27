@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CertificateProvider } from "@/contexts/CertificateContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 import LandingPage from "./pages/LandingPage";
 import UserLoginForm from "./components/auth/UserLoginForm";
@@ -26,71 +27,73 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <CertificateProvider>
-      <TooltipProvider>
-        <HotToaster
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: 'hsl(var(--card))',
-              color: 'hsl(var(--card-foreground))',
-              border: '1px solid hsl(var(--border))',
-            },
-          }}
-        />
-        <SonnerToaster />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<UserLoginForm />} />
-            <Route path="/login/user" element={<UserLoginForm />} />
-            <Route path="/login/officer" element={<OfficerLoginForm />} />
-            <Route path="/login/mid-authority" element={<MidAuthorityLogin />} />
-            <Route path="/login/lower-authority" element={<LowerAuthorityLogin />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+    <LanguageProvider>
+      <CertificateProvider>
+        <TooltipProvider>
+          <HotToaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: 'hsl(var(--card))',
+                color: 'hsl(var(--card-foreground))',
+                border: '1px solid hsl(var(--border))',
+              },
+            }}
+          />
+          <SonnerToaster />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<UserLoginForm />} />
+              <Route path="/login/user" element={<UserLoginForm />} />
+              <Route path="/login/officer" element={<OfficerLoginForm />} />
+              <Route path="/login/mid-authority" element={<MidAuthorityLogin />} />
+              <Route path="/login/lower-authority" element={<LowerAuthorityLogin />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Citizen Routes */}
-            <Route
-              path="/dashboard"
-              element={<Dashboard />}
-            />
-            <Route
-              path="/apply"
-              element={<Apply />}
-            />
-            <Route
-              path="/my-certificates"
-              element={<MyCertificates />}
-            />
+              {/* Citizen Routes */}
+              <Route
+                path="/dashboard"
+                element={<Dashboard />}
+              />
+              <Route
+                path="/apply"
+                element={<Apply />}
+              />
+              <Route
+                path="/my-certificates"
+                element={<MyCertificates />}
+              />
 
-            {/* Official Routes */}
-            <Route
-              path="/official-dashboard"
-              element={<OfficialDashboard />}
-            />
-            <Route
-              path="/official-dashboard/lower"
-              element={<LowerAuthorityDashboard />}
-            />
-            <Route
-              path="/official-dashboard/mid"
-              element={<MidAuthorityDashboard />}
-            />
+              {/* Official Routes */}
+              <Route
+                path="/official-dashboard"
+                element={<OfficialDashboard />}
+              />
+              <Route
+                path="/official-dashboard/lower"
+                element={<LowerAuthorityDashboard />}
+              />
+              <Route
+                path="/official-dashboard/mid"
+                element={<MidAuthorityDashboard />}
+              />
 
-            {/* Shared Routes */}
-            <Route
-              path="/profile"
-              element={<Profile />}
-            />
+              {/* Shared Routes */}
+              <Route
+                path="/profile"
+                element={<Profile />}
+              />
 
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </CertificateProvider>
+              <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </CertificateProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 
