@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Death Certificate</title>
+  <link rel="stylesheet" href="certificate-styles.css" />
+</head>
+<body>
+  <div class="certificate-page cert-death">
+    <div class="cert-watermark">DEATH</div>
+
+    <!-- HEADER -->
+    <div class="cert-header">
+      <div class="dept-name">State Government</div>
+      <div class="dept-sub">Certificate Department</div>
+      <div class="cert-title">Death Certificate</div>
+    </div>
+
+    <!-- META ROW -->
+    <div class="cert-meta">
+      <div class="meta-item">
+        <span class="meta-label">Registration No.:</span>
+        <span class="meta-value">{{registrationNo}}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Date of Issue:</span>
+        <span class="meta-value">{{dateOfIssue}}</span>
+      </div>
+    </div>
+
+    <!-- CERTIFICATION BODY TEXT -->
+    <div class="cert-body-text">
+      This is to certify that the death of <strong>{{fullName}}</strong> has been
+      registered in the records of the Certificate Department, State Government.
+      The details of the deceased, as recorded, are presented below.
+    </div>
+
+    <!-- DETAIL TABLE -->
+    <table class="cert-details">
+      <tr>
+        <td class="label-cell">Full Name of Deceased</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{fullName}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Date of Death</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{dateOfDeath}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Place of Death</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{placeOfDeath}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Cause of Death</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{causeOfDeath}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Sex</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{sex}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Age at Death</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{ageAtDeath}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Father's / Husband's Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{fatherOrHusbandName}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Permanent Address</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{address}}</td>
+      </tr>
+    </table>
+
+    <!-- FOOTER -->
+    <div class="cert-footer">
+      <div class="cert-signature">
+        <img class="sig-image" src="signature.png" alt="Signature" />
+        <div class="sig-line"></div>
+        <div class="sig-name">{{signatoryName}}</div>
+        <div class="sig-title">Authorised Signatory</div>
+      </div>
+    </div>
+
+    <!-- DIGITAL NOTE -->
+    <div class="cert-digital-note">
+      This is a digitally generated certificate. Any tampering or alteration will render it invalid.
+    </div>
+  </div>
+</body>
+</html>

@@ -48,8 +48,6 @@ export default function Profile() {
           if (response.status === 200) {
             const userData = response.data.user || response.data.officer || response.data.senior || response.data.higher;
             setUser(userData);
-            const role = localStorage.getItem('role');
-            const isOfficer = role === 'officer' || role === 'mid' || role === 'higher';
             setName(userData?.username || userData?.name);
             setEmail(userData?.email || '');
           } else {

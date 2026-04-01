@@ -31,15 +31,16 @@ export default function Register() {
 
     try {
       const response = await axios.post(`${API_URL}/user/signup`, { name, phone, email, role: 'citizen' });
-      if (response.status == 200) {
+      if (response.status === 200) {
         toast.success(t('register_success'));
         navigate('/login/user');
       } else {
         toast.error(t('register_failed'));
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Unable to register via backend. You can still login.';
-      console.warn('Register request failed (this may be expected in frontend-only flow):', msg);
+      const msg = err?.response?.data?.message || t('register_failed');
+      console.warn('Register request failed:', msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

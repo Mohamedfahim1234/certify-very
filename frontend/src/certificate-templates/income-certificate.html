@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Income Certificate</title>
+  <link rel="stylesheet" href="certificate-styles.css" />
+</head>
+<body>
+  <div class="certificate-page cert-income">
+    <div class="cert-watermark">INCOME</div>
+
+    <!-- HEADER -->
+    <div class="cert-header">
+      <div class="dept-name">State Government</div>
+      <div class="dept-sub">Certificate Department</div>
+      <div class="cert-title">Income Certificate</div>
+    </div>
+
+    <!-- META ROW -->
+    <div class="cert-meta">
+      <div class="meta-item">
+        <span class="meta-label">Certificate No.:</span>
+        <span class="meta-value">{{certificateNo}}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Date of Issue:</span>
+        <span class="meta-value">{{dateOfIssue}}</span>
+      </div>
+    </div>
+
+    <!-- CERTIFICATION BODY TEXT -->
+    <div class="cert-body-text">
+      This is to certify that <strong>{{fullName}}</strong>, whose details are given below,
+      has an annual income as stated. This certificate is issued based on the records
+      available with the revenue department and upon due verification.
+    </div>
+
+    <!-- DETAIL TABLE -->
+    <table class="cert-details">
+      <tr>
+        <td class="label-cell">Full Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{fullName}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Father's / Husband's Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{fatherOrHusbandName}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Annual Income (in Figures)</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">₹ {{annualIncome}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Annual Income (in Words)</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{annualIncomeWords}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Source of Income</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{sourceOfIncome}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Permanent Address</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{address}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Validity Period</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{validityPeriod}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Purpose</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{purpose}}</td>
+      </tr>
+    </table>
+
+    <!-- FOOTER -->
+    <div class="cert-footer">
+      <div class="cert-signature">
+        <img class="sig-image" src="signature.png" alt="Signature" />
+        <div class="sig-line"></div>
+        <div class="sig-name">{{signatoryName}}</div>
+        <div class="sig-title">Authorised Signatory</div>
+      </div>
+    </div>
+
+    <!-- DIGITAL NOTE -->
+    <div class="cert-digital-note">
+      This is a digitally generated certificate. Any tampering or alteration will render it invalid.
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marriage Certificate</title>
+  <link rel="stylesheet" href="certificate-styles.css" />
+</head>
+<body>
+  <div class="certificate-page cert-marriage">
+    <div class="cert-watermark">MARRIAGE</div>
+
+    <!-- HEADER -->
+    <div class="cert-header">
+      <div class="dept-name">State Government</div>
+      <div class="dept-sub">Certificate Department</div>
+      <div class="cert-title">Marriage Certificate</div>
+    </div>
+
+    <!-- META ROW -->
+    <div class="cert-meta">
+      <div class="meta-item">
+        <span class="meta-label">Registration No.:</span>
+        <span class="meta-value">{{registrationNo}}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Date of Issue:</span>
+        <span class="meta-value">{{dateOfIssue}}</span>
+      </div>
+    </div>
+
+    <!-- CERTIFICATION BODY TEXT -->
+    <div class="cert-body-text">
+      This is to certify that the marriage between <strong>{{groomName}}</strong> and
+      <strong>{{brideName}}</strong> has been duly registered in the records of the
+      Certificate Department, State Government. The details of the marriage,
+      as recorded, are presented below.
+    </div>
+
+    <!-- DETAIL TABLE -->
+    <table class="cert-details">
+      <tr>
+        <td class="label-cell">Groom's Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{groomName}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Bride's Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{brideName}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Date of Marriage</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{dateOfMarriage}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Venue of Marriage</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{venueOfMarriage}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Groom's Father's Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{groomFatherName}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Bride's Father's Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{brideFatherName}}</td>
+      </tr>
+    </table>
+
+    <!-- WITNESSES -->
+    <div style="margin: 4mm 0 6mm; font-size: 10pt; font-weight: 700; color: #333;">Witnesses:</div>
+    <table class="cert-details">
+      <tr>
+        <td class="label-cell">1. Witness Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{witness1Name}}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">2. Witness Name</td>
+        <td class="separator-cell">:</td>
+        <td class="value-cell">{{witness2Name}}</td>
+      </tr>
+    </table>
+
+    <!-- FOOTER -->
+    <div class="cert-footer">
+      <div class="cert-signature">
+        <img class="sig-image" src="signature.png" alt="Signature" />
+        <div class="sig-line"></div>
+        <div class="sig-name">{{signatoryName}}</div>
+        <div class="sig-title">Authorised Signatory</div>
+      </div>
+    </div>
+
+    <!-- DIGITAL NOTE -->
+    <div class="cert-digital-note">
+      This is a digitally generated certificate. Any tampering or alteration will render it invalid.
+    </div>
+  </div>
+</body>
+</html>

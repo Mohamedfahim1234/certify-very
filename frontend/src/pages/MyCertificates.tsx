@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
-import { Eye, Download, FileText } from 'lucide-react';
+import { Eye, Download, FileText, FileDown } from 'lucide-react';
 import axios from 'axios';
 import { CertificateStatus } from '@/contexts/CertificateContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { generateCertificatePDF } from '@/utils/generateCertificatePDF';
 
 interface ApprovalHistoryItem {
   level: string;
@@ -23,6 +24,7 @@ interface ApprovalHistoryItem {
 
 interface Certificate {
   _id: string;
+  certificateId?: string;
   userId: string;
   applicantName: string;
   certificateType: string;
@@ -51,9 +53,9 @@ export default function MyCertificates() {
 
   const getCertificateLabel = (type: string) => {
     const labels: Record<string, string> = {
-      caste: t('cert_caste'),
+      community: 'Community Certificate',
       income: t('cert_income'),
-      domicile: t('cert_domicile'),
+      death: 'Death Certificate',
       marriage: t('cert_marriage'),
       birth: t('cert_birth'),
     };
@@ -118,16 +120,18 @@ export default function MyCertificates() {
           </div>
 
           {certificates.length === 0 ? (
-            <Card className="glass-card p-12 text-center">
-              <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="font-heading text-xl font-semibold mb-2">{t('mycerts_no_certs')}</h3>
-              <p className="text-muted-foreground mb-6">
-                {t('mycerts_no_certs_desc')}
-              </p>
-              <Button onClick={() => window.location.href = '/apply'}>
-                {t('mycerts_apply_now')}
-              </Button>
-            </Card>
+            <div className="text-center py-12">
+                  <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FileText className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-1">{t('table_no_certs')}</h3>
+                  <p className="text-muted-foreground mb-6">
+                    {t('mycerts_no_certs_desc')}
+                  </p>
+                  <Button onClick={() => window.location.href = '/apply'}>
+                    {t('mycerts_apply_now')}
+                  </Button>
+                </div>
           ) : (
             <div className="space-y-4">
               {certificates.map((cert, index) => (
@@ -147,8 +151,8 @@ export default function MyCertificates() {
                           <StatusBadge status={cert.status} />
                         </div>
                         <div className="space-y-1 text-sm text-muted-foreground">
-                          <p>Certificate ID: <span className="font-mono font-semibold text-foreground">{cert._id}</span></p>
-                          <p>Submitted: {new Date(cert.appliedAt).toLocaleDateString()}</p>
+                          <p>{t('table_id')}: <span className="font-mono font-semibold text-foreground">{cert.certificateId || cert._id}</span></p>
+                          <p>{t('mycerts_applied_on')}: {new Date(cert.appliedAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2">
@@ -156,10 +160,10 @@ export default function MyCertificates() {
                           <Button
                             variant="outline"
                             className="border-emerald-500 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                            onClick={() => handleDownloadAll(cert)}
+                            onClick={() => generateCertificatePDF(cert)}
                           >
-                            <Download className="h-4 w-4 mr-2" />
-                            {t('mycerts_view_details')}
+                            <FileDown className="h-4 w-4 mr-2" />
+                            {t('cert_download_pdf')}
                           </Button>
                         )}
                         <Button
@@ -193,31 +197,31 @@ export default function MyCertificates() {
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Certificate ID</p>
-                  <p className="font-mono font-semibold">{selectedCert._id}</p>
+                  <p className="text-sm text-muted-foreground">{t('table_id')}</p>
+                  <p className="font-mono font-semibold">{selectedCert.certificateId || selectedCert._id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p className="text-sm text-muted-foreground">{t('mycerts_status')}</p>
                   <StatusBadge status={selectedCert.status} />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Applicant</p>
+                  <p className="text-sm text-muted-foreground">{t('mycerts_applicant')}</p>
                   <p className="font-semibold">{selectedCert.applicantName}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Submitted</p>
+                  <p className="text-sm text-muted-foreground">{t('mycerts_applied_on')}</p>
                   <p className="font-semibold">{new Date(selectedCert.appliedAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
               {/* Documents */}
               <div>
-                <h4 className="font-semibold mb-3">Uploaded Documents</h4>
+                <h4 className="font-semibold mb-3">{t('modal_uploaded_docs')}</h4>
                 <div className="grid gap-2">
                   {selectedCert.documentUrl && selectedCert.documentUrl.length > 0 ? (
                     selectedCert.documentUrl.map((url, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <span className="text-sm">Document {idx + 1}</span>
+                        <span className="text-sm">{t('modal_document')} {idx + 1}</span>
                         <div className="flex gap-2">
                           <a
                             className="btn btn-sm btn-ghost flex items-center"
@@ -226,7 +230,7 @@ export default function MyCertificates() {
                             rel="noopener noreferrer"
                           >
                             <Eye className="h-4 w-4 mr-1" />
-                            View
+                            {t('table_view')}
                           </a>
                           <a
                             className="btn btn-sm btn-ghost flex items-center"
@@ -234,32 +238,32 @@ export default function MyCertificates() {
                             download
                           >
                             <Download className="h-4 w-4 mr-1" />
-                            Download
+                            {t('table_download')}
                           </a>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">No documents uploaded</p>
+                    <p className="text-sm text-muted-foreground">{t('modal_no_docs')}</p>
                   )}
                 </div>
               </div>
 
               {/* Approval Timeline */}
               <div className="space-y-4">
-                <h4 className="font-semibold">Approval Timeline</h4>
+                <h4 className="font-semibold">{t('modal_approval_timeline')}</h4>
 
                 {/* No history at all */}
                 {(!selectedCert.approvalHistory?.length &&
                   !selectedCert.seniorapprovalhistory?.length &&
                   !selectedCert.higherapprovalhistory?.length) && (
-                    <p className="text-sm text-muted-foreground">No approval actions yet</p>
+                    <p className="text-sm text-muted-foreground">{t('modal_no_approval_actions')}</p>
                   )}
 
                 {/* Lower Officer */}
                 {selectedCert.approvalHistory && selectedCert.approvalHistory.length > 0 && (
                   <div>
-                    <h5 className="text-xs font-medium text-emerald-700 dark:text-emerald-400 uppercase tracking-wide mb-2">Lower Officer</h5>
+                    <h5 className="text-xs font-medium text-emerald-700 dark:text-emerald-400 uppercase tracking-wide mb-2">{t('modal_lower_officer')}</h5>
                     <div className="space-y-2">
                       {selectedCert.approvalHistory.map((history, idx) => (
                         <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
@@ -269,7 +273,7 @@ export default function MyCertificates() {
                           <div className="flex items-center justify-between">
                             <span className={`font-medium ${history.action === 'approved' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
                               }`}>
-                              {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
+                              {history.level.charAt(0).toUpperCase() + history.level.slice(1)} {t('modal_level')}: {history.action === 'approved' ? t('modal_approved') : t('modal_rejected')}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {new Date(history.timestamp).toLocaleString()}
@@ -287,7 +291,7 @@ export default function MyCertificates() {
                 {/* Mid / Senior Officer */}
                 {selectedCert.seniorapprovalhistory && selectedCert.seniorapprovalhistory.length > 0 && (
                   <div>
-                    <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-2">Mid / Senior Officer</h5>
+                    <h5 className="text-xs font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-2">{t('modal_mid_senior_officer')}</h5>
                     <div className="space-y-2">
                       {selectedCert.seniorapprovalhistory.map((history, idx) => (
                         <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
@@ -297,7 +301,7 @@ export default function MyCertificates() {
                           <div className="flex items-center justify-between">
                             <span className={`font-medium ${history.action === 'approved' ? 'text-amber-700 dark:text-amber-400' : 'text-red-700 dark:text-red-400'
                               }`}>
-                              {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
+                              {history.level.charAt(0).toUpperCase() + history.level.slice(1)} {t('modal_level')}: {history.action === 'approved' ? t('modal_approved') : t('modal_rejected')}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {new Date(history.timestamp).toLocaleString()}
@@ -315,7 +319,7 @@ export default function MyCertificates() {
                 {/* Higher Official */}
                 {selectedCert.higherapprovalhistory && selectedCert.higherapprovalhistory.length > 0 && (
                   <div>
-                    <h5 className="text-xs font-medium text-indigo-700 dark:text-indigo-400 uppercase tracking-wide mb-2">Higher Official</h5>
+                    <h5 className="text-xs font-medium text-indigo-700 dark:text-indigo-400 uppercase tracking-wide mb-2">{t('modal_higher_official')}</h5>
                     <div className="space-y-2">
                       {selectedCert.higherapprovalhistory.map((history, idx) => (
                         <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
@@ -325,7 +329,7 @@ export default function MyCertificates() {
                           <div className="flex items-center justify-between">
                             <span className={`font-medium ${history.action === 'approved' ? 'text-indigo-700 dark:text-indigo-400' : 'text-red-700 dark:text-red-400'
                               }`}>
-                              {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
+                              {history.level.charAt(0).toUpperCase() + history.level.slice(1)} {t('modal_level')}: {history.action === 'approved' ? t('modal_approved') : t('modal_rejected')}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {new Date(history.timestamp).toLocaleString()}
@@ -344,36 +348,25 @@ export default function MyCertificates() {
               {/* Rejection Reason */}
               {selectedCert.rejectionReason && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-                  <h4 className="font-semibold text-destructive mb-2">Rejection Reason</h4>
+                  <h4 className="font-semibold text-destructive mb-2">{t('modal_rejection_reason')}</h4>
                   <p className="text-sm">{selectedCert.rejectionReason}</p>
                 </div>
               )}
 
-              {/* Download Certificate — shown when fully approved */}
-              {isApproved(selectedCert) && selectedCert.documentUrl && selectedCert.documentUrl.length > 0 && (
+              {/* Download Certificate PDF — shown when fully approved */}
+              {isApproved(selectedCert) && (
                 <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg p-4">
                   <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-2">
-                    <Download className="h-4 w-4" />
-                    Download Your Certificate
+                    <FileDown className="h-4 w-4" />
+                    {t('cert_download_pdf')}
                   </h4>
-                  <div className="space-y-2">
-                    {selectedCert.documentUrl.map((url, idx) => (
-                      <a
-                        key={idx}
-                        href={url}
-                        download={`${getCertificateLabel(selectedCert.certificateType).replace(/\s+/g, '_')}_doc${idx + 1}.pdf`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between p-3 bg-white dark:bg-emerald-900/30 rounded-lg border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-800/40 transition-colors cursor-pointer"
-                      >
-                        <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300">Document {idx + 1}</span>
-                        <span className="flex items-center gap-1 text-sm text-emerald-700 dark:text-emerald-400 font-medium">
-                          <Download className="h-4 w-4" />
-                          Download
-                        </span>
-                      </a>
-                    ))}
-                  </div>
+                  <Button
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => generateCertificatePDF(selectedCert)}
+                  >
+                    <FileDown className="h-4 w-4 mr-2" />
+                    {t('cert_download_pdf')}
+                  </Button>
                 </div>
               )}
             </div>

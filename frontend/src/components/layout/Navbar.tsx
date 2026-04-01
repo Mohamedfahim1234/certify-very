@@ -105,6 +105,7 @@ export const Navbar = () => {
                     () => {
                       localStorage.removeItem('token');
                       localStorage.removeItem('role');
+                      localStorage.removeItem('authorityLevel');
                       navigate('/');
                     }
                   }
@@ -152,6 +153,7 @@ export const Navbar = () => {
                 onClick={() => {
                   localStorage.removeItem('token');
                   localStorage.removeItem('role');
+                  localStorage.removeItem('authorityLevel');
                   navigate('/');
                   setMobileMenuOpen(false);
                 }}

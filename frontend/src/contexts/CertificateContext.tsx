@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-export type CertificateType = 'caste' | 'income' | 'domicile' | 'marriage' | 'birth';
+export type CertificateType = 'community' | 'income' | 'death' | 'marriage' | 'birth';
 export type CertificateStatus = 
   | 'submitted' 
   | 'pending_officer' 
@@ -45,7 +45,7 @@ const mockCertificates: Certificate[] = [
     id: 'CERT001',
     applicantId: '1',
     applicantName: 'Rajesh Kumar',
-    type: 'caste',
+    type: 'community',
     status: 'pending_officer',
     submittedDate: '2025-10-28',
     documents: [

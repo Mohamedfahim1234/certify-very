@@ -18,6 +18,7 @@ export default function Apply() {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<CertificateType | ''>('');
   const [uploads, setUploads] = useState<{ [key: string]: File | null }>({});
+  const [formDetails, setFormDetails] = useState<{ [key: string]: string }>({});
   const { t } = useLanguage();
 
   const API_URL = import.meta.env.VITE_API_URL;
@@ -25,30 +26,61 @@ export default function Apply() {
 
   const certificateTypes = [
     {
-      value: 'caste' as CertificateType,
-      label: t('cert_caste'),
-      documents: [t('apply_doc_aadhaar'), t('apply_doc_school_cert')]
-    },
-    {
-      value: 'income' as CertificateType,
-      label: t('cert_income'),
-      documents: [t('apply_doc_aadhaar'), t('apply_doc_income_decl')]
-    },
-    {
-      value: 'domicile' as CertificateType,
-      label: t('cert_domicile'),
-      documents: [t('apply_doc_aadhaar'), t('apply_doc_address_proof')]
-    },
-    {
-      value: 'marriage' as CertificateType,
-      label: t('cert_marriage'),
-      documents: [t('apply_doc_aadhaar_both'), t('apply_doc_wedding_photo'), t('apply_doc_witness_id')]
-    },
-    {
-      value: 'birth' as CertificateType,
+      value: "birth" as CertificateType,
       label: t('cert_birth'),
-      documents: [t('apply_doc_birth_slip'), t('apply_doc_app_form')]
+      fields: [
+        { name: "childName", label: t('apply_field_child_name'), type: "text" },
+        { name: "dateOfBirth", label: t('apply_field_dob'), type: "date" },
+        { name: "placeOfBirth", label: t('apply_field_pob'), type: "text" },
+        { name: "sex", label: t('apply_field_sex'), type: "select", options: [t('sex_male'), t('sex_female'), t('sex_other')] },
+        { name: "fatherName", label: t('apply_field_father_name'), type: "text" },
+        { name: "motherName", label: t('apply_field_mother_name'), type: "text" },
+      ],
+      documents: [t('apply_doc_birth_slip'), t('apply_doc_aadhaar')]
     },
+    {
+      value: "death" as CertificateType,
+      label: t('cert_death'),
+      fields: [
+        { name: "name", label: t('apply_field_name'), type: "text" },
+        { name: "dateOfDeath", label: t('apply_field_dod'), type: "date" },
+        { name: "causeOfDeath", label: t('apply_field_cod'), type: "text" },
+        { name: "address", label: t('apply_field_address'), type: "text" },
+      ],
+      documents: [t('apply_doc_aadhaar'), t('apply_doc_medical_report')]
+    },
+    {
+      value: "income" as CertificateType,
+      label: t('cert_income'),
+      fields: [
+        { name: "fullName", label: t('apply_field_full_name'), type: "text" },
+        { name: "annualIncome", label: t('apply_field_annual_income'), type: "number" },
+        { name: "address", label: t('apply_field_address'), type: "text" },
+      ],
+      documents: [t('apply_doc_income_decl'), t('apply_doc_aadhaar')]
+    },
+    {
+      value: "community" as CertificateType,
+      label: t('cert_community'),
+      fields: [
+        { name: "fullName", label: t('apply_field_full_name'), type: "text" },
+        { name: "community", label: t('apply_field_community'), type: "text" },
+        { name: "parentName", label: t('apply_field_parent_name'), type: "text" },
+        { name: "address", label: t('apply_field_address'), type: "text" },
+      ],
+      documents: [t('apply_doc_school_cert'), t('apply_doc_aadhaar')]
+    },
+    {
+      value: "marriage" as CertificateType,
+      label: t('cert_marriage'),
+      fields: [
+        { name: "groomName", label: t('apply_field_groom_name'), type: "text" },
+        { name: "brideName", label: t('apply_field_bride_name'), type: "text" },
+        { name: "dateOfMarriage", label: t('apply_field_dom'), type: "date" },
+        { name: "placeOfMarriage", label: t('apply_field_pom'), type: "text" },
+      ],
+      documents: [t('apply_doc_aadhaar_both'), t('apply_doc_wedding_photo'), t('apply_doc_witness_id')]
+    }
   ];
 
   const selectedCertificate = certificateTypes.find(c => c.value === selectedType);
@@ -90,6 +122,11 @@ export default function Apply() {
 
       const form = new FormData();
       form.append("certificateType", selectedType);
+
+      // Append dynamic text fields exactly as the PDF generator expects them as a JSON string
+      if (Object.keys(formDetails).length > 0) {
+        form.append("details", JSON.stringify(formDetails));
+      }
 
       Object.keys(uploads).forEach((key) => {
         const file = uploads[key];
@@ -143,6 +180,7 @@ export default function Apply() {
                 <Select value={selectedType} onValueChange={(value) => {
                   setSelectedType(value as CertificateType);
                   setUploads({});
+                  setFormDetails({});
                 }}>
                   <SelectTrigger>
                     <SelectValue placeholder={t('apply_select_cert')} />
@@ -156,6 +194,47 @@ export default function Apply() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Dynamic Form Fields */}
+              <AnimatePresence>
+                {selectedCertificate && selectedCertificate.fields && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                  >
+                    {selectedCertificate.fields.map((field) => (
+                      <div key={field.name} className="space-y-2">
+                        <Label>{field.label}</Label>
+                        {field.type === 'select' ? (
+                          <Select 
+                            value={formDetails[field.name] || ''} 
+                            onValueChange={(val) => setFormDetails(prev => ({ ...prev, [field.name]: val }))}
+                          >
+                            <SelectTrigger className="w-full h-10 border rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground">
+                              <SelectValue placeholder={`Select ${field.label}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {field.options?.map(opt => (
+                                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <input
+                            type={field.type}
+                            className="w-full h-10 border rounded-md px-3 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 bg-background text-foreground"
+                            value={formDetails[field.name] || ''}
+                            onChange={(e) => setFormDetails(prev => ({ ...prev, [field.name]: e.target.value }))}
+                            required
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Document Upload Section */}
               <AnimatePresence>

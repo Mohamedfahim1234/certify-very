@@ -11,14 +11,14 @@ import axios from 'axios';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface certificate {
-  userId: String,
-  certificateType: String,
-  aadharUrl: String,
-  documentUrl: String,
-  status: String, enum: ['pending', 'approved', 'rejected'],
-  appliedAt: Date,
-  createdAt: Date,
-  updatedAt: Date
+  userId: string;
+  certificateType: string;
+  aadharUrl: string;
+  documentUrl: string;
+  status: string;
+  appliedAt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default function Dashboard() {
@@ -34,14 +34,10 @@ export default function Dashboard() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
 
-    if (!token) {
-      console.log('No token found, redirecting to login');
+    if (!token || role !== 'citizen') {
+      console.log('No token or unauthorized role, redirecting to login');
       navigate('/');
-    }
-
-    if (role !== 'citizen') {
-      console.log('Unauthorized role, redirecting to login');
-      navigate('/');
+      return;
     }
 
     const getUserData = async () => {

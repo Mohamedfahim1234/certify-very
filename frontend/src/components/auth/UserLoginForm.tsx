@@ -32,17 +32,35 @@ export default function UserLoginForm() {
 
     try {
       setLoading(true);
+      console.log('Requesting OTP for:', email);
       const response = await axios.post(`${API_URL}/user/request-otp`, { email });
-      if (response.status === 201) {
+      console.log('OTP Success Response:', response.status, response.data);
+      if (response.status === 200) {
         toast.success(t('login_otp_sent'));
         setStep('otp');
-        setLoading(false);
-      } else {
-        toast.error(t('login_otp_failed'));
-        setLoading(false);
       }
-    } catch (error) {
-      toast.error(t('login_error'));
+    } catch (error: any) {
+      console.error('OTP request error:', error);
+      
+      // Handle axios error specifically
+      if (axios.isAxiosError(error) && error.response) {
+        console.log('Axios error response status:', error.response.status);
+        if (error.response.status === 200) {
+          // Sometimes Vite plugins or network proxies wrap a 200 in an error if JSON parsing fails
+          toast.success(t('login_otp_sent'));
+          setStep('otp');
+        } else if (error.response.data && error.response.data.message) {
+          toast.error(error.response.data.message);
+        } else {
+           toast.error(t('login_error'));
+        }
+      } else if (error?.status === 200) {
+          toast.success(t('login_otp_sent'));
+          setStep('otp');
+      } else {
+        toast.error(t('login_error'));
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -52,21 +70,39 @@ export default function UserLoginForm() {
 
     if (otp.length === 6) {
       try {
+        setLoading(true);
         const response = await axios.post(`${API_URL}/user/login`, { email, otp });
-        if (response.status == 200) {
-          const userData = response.data.user;
+        if (response.status === 200) {
           localStorage.setItem('token', response.data.token);
           localStorage.setItem('role', response.data.user.role);
           navigate('/dashboard');
           toast.success(t('login_success'));
         } else {
           toast.error(t('login_invalid_otp'));
-          setLoading(false);
         }
       } catch (error) {
         toast.error(t('login_error_during'));
+      } finally {
         setLoading(false);
       }
+    }
+  };
+
+  const handleResendOTP = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API_URL}/user/request-otp`, { email });
+      if (response.status === 200) {
+        toast.success(t('login_otp_resent'));
+      }
+    } catch (error: any) {
+      if (error?.response?.status === 200 || error?.status === 200) {
+        toast.success(t('login_otp_resent'));
+      } else {
+        toast.error(t('login_error'));
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -206,8 +242,9 @@ export default function UserLoginForm() {
               <Button
                 type="button"
                 variant="link"
-                onClick={() => toast.success(t('login_otp_resent'))}
+                onClick={handleResendOTP}
                 className="w-full text-sm"
+                disabled={loading}
               >
                 {t('login_resend_otp')}
               </Button>

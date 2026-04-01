@@ -12,11 +12,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const mockOfficials = {
-  'officer1': { password: 'pass123', name: 'Amit Sharma', role: 'officer' as const },
-  'senior1': { password: 'pass123', name: 'Priya Singh', role: 'senior' as const },
-  'higher1': { password: 'pass123', name: 'Dr. Rajiv Mehta', role: 'higher' as const },
-};
+
 
 type AuthorityLevel = 'lower' | 'mid' | 'higher';
 
@@ -85,6 +81,7 @@ export default function OfficerLoginForm() {
         localStorage.setItem('role', authorityLevel);
         localStorage.setItem('authorityLevel', authorityLevel);
         toast.success(`Welcome back, ${official.username}!`);
+        setLoading(false);
         navigate(getDashboardRoute(authorityLevel));
         return;
       }

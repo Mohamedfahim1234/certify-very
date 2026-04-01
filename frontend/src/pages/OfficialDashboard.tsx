@@ -4,14 +4,13 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
-import { Eye, CheckCircle, XCircle, Search, Download } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, Search, Download, FileText, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -29,6 +28,7 @@ interface ApprovalHistoryItem {
 interface Certificate {
   _id: string;
   userId: string;
+  certificateId?: string;
   applicantName: string;
   certificateType: string;
   documentUrl?: string[];
@@ -53,93 +53,70 @@ const getHigherAuthorityStatus = (cert: Certificate): 'pending' | 'approved' | '
   return 'pending';
 };
 
-// Status derived from approvalHistory (lower officer)
-const getLowerAuthorityStatus = (cert: Certificate): 'pending' | 'approved' | 'rejected' => {
-  if (cert.approvalHistory && cert.approvalHistory.length > 0) {
-    const entry = cert.approvalHistory.find(
-      (h) => h.level === 'lower' || h.level === 'officer' || h.level === 'final'
-    );
-    if (entry) return entry.action === 'approved' ? 'approved' : 'rejected';
-  }
-  return 'pending';
-};
-
-// Status derived from seniorapprovalhistory (mid officer)
-const getMidAuthorityStatus = (cert: Certificate): 'pending' | 'approved' | 'rejected' => {
-  if (cert.seniorapprovalhistory && cert.seniorapprovalhistory.length > 0) {
-    const entry = cert.seniorapprovalhistory.find(
-      (h) => h.level === 'senior' || h.level === 'mid' || h.level === 'final'
-    );
-    if (entry) return entry.action === 'approved' ? 'approved' : 'rejected';
-  }
-  return 'pending';
-};
-
 export default function OfficialDashboard() {
   const navigate = useNavigate();
   const [certificatesData, setCertificatesData] = useState<Certificate[]>([]);
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const { t } = useLanguage();
 
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem('token');
-  const user = localStorage.getItem('role');
-
-  if (!token) {
-    navigate('/officer-login');
-  }
 
   useEffect(() => {
-    const fetchCertificates = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/higher-officer/certificates/list`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        if (response.status === 200) {
-          console.log('Fetched certificates:', response.data.certificates);
-          const certificate = response.data.certificates;
-          const Certificate = Array.isArray(certificate) ? certificate : [];
-          setCertificatesData(Certificate);
-        }
-      } catch (error) {
-        console.error('Error fetching certificates:', error);
-        toast.error('Failed to fetch certificates');
-      }
-    };
+    if (!token) {
+      navigate('/officer-login');
+    }
+  }, [token, navigate]);
 
+  const fetchCertificates = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/higher-officer/certificates/list`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.status === 200) {
+        const certificate = response.data.certificates;
+        const certs = Array.isArray(certificate) ? certificate : [];
+        setCertificatesData(certs);
+      }
+    } catch (error) {
+      console.error('Error fetching certificates:', error);
+      toast.error('Failed to fetch certificates');
+    }
+  };
+
+  useEffect(() => {
     fetchCertificates();
   }, [API_URL, token]);
-
 
   const handleApprove = async (cert: Certificate) => {
     try {
       const response = await axios.put(`${API_URL}/higher-officer/certificate/status/update/${cert._id}`, {
         status: 'approved',
+        remarks: rejectReason || t('remark_higher_approved') || 'Approved by Higher Official'
       }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       if (response.status === 200) {
-        toast.success('Certificate approved successfully');
+        toast.success(t('official_approve_success') || 'Certificate approved successfully');
         setSelectedCert(null);
-      } else {
-        toast.error('Failed to approve certificate');
+        setRejectReason('');
+        fetchCertificates();
       }
     } catch (error) {
-      toast.error('Failed to approve certificate');
+      toast.error(t('official_approve_failed') || 'Failed to approve certificate');
     }
   };
 
   const handleReject = async (cert: Certificate) => {
-    // enforce that a rejection reason is provided
     if (!rejectReason || rejectReason.trim() === '') {
-      toast.error('Please enter a rejection reason before rejecting');
+      toast.error(t('official_remarks_required') || 'Please enter a rejection reason');
       return;
     }
 
@@ -153,35 +130,31 @@ export default function OfficialDashboard() {
         }
       });
       if (response.status === 200) {
-        toast.success('Certificate rejected successfully');
+        toast.success(t('official_reject_success') || 'Certificate rejected successfully');
         setSelectedCert(null);
         setRejectReason('');
-      } else {
-        toast.error('Failed to reject certificate');
+        fetchCertificates();
       }
     } catch (error) {
-      toast.error('Failed to reject certificate');
+      toast.error(t('official_reject_failed') || 'Failed to reject certificate');
     }
   };
 
-  const pendingCerts = certificatesData.filter(c => c.status.includes('pending'));
-  const approvedCerts = certificatesData.filter(c => c.status.includes('approved'));
-  const rejectedCerts = certificatesData.filter(c => c.status === 'rejected');
+  const filteredBySearch = certificatesData.filter(c => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return c.applicantName?.toLowerCase().includes(q) || 
+           c._id.toLowerCase().includes(q) || 
+           c.certificateId?.toLowerCase().includes(q);
+  });
 
-  const displayCerts = filterStatus === 'all' ? certificatesData :
+  const pendingCerts = filteredBySearch.filter(c => getHigherAuthorityStatus(c) === 'pending');
+  const approvedCerts = filteredBySearch.filter(c => getHigherAuthorityStatus(c) === 'approved');
+  const rejectedCerts = filteredBySearch.filter(c => getHigherAuthorityStatus(c) === 'rejected');
+
+  const displayCerts = filterStatus === 'all' ? filteredBySearch :
     filterStatus === 'pending' ? pendingCerts :
       filterStatus === 'approved' ? approvedCerts : rejectedCerts;
-
-  const getCertificateLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      caste: t('cert_caste'),
-      income: t('cert_income'),
-      domicile: t('cert_domicile'),
-      marriage: t('cert_marriage'),
-      birth: t('cert_birth'),
-    };
-    return labels[type] || type;
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -194,25 +167,21 @@ export default function OfficialDashboard() {
           className="space-y-6"
         >
           <div>
-            <h1 className="font-heading text-3xl font-bold mb-2">
-              {t('official_dashboard_title')}
-            </h1>
-            <p className="text-muted-foreground">
-              {t('official_certificate_queue')}
-            </p>
+            <h1 className="font-heading text-3xl font-bold mb-2">{t('official_dashboard_title')}</h1>
+            <p className="text-muted-foreground">{t('officer_higher_desc')}</p>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="glass-card p-6">
+            <Card className="glass-card p-6 border-l-4 border-amber-500">
               <p className="text-sm text-muted-foreground mb-1">{t('official_total_pending')}</p>
               <p className="text-3xl font-bold text-amber-600">{pendingCerts.length}</p>
             </Card>
-            <Card className="glass-card p-6">
-              <p className="text-sm text-muted-foreground mb-1">{t('status_approved')}</p>
-              <p className="text-3xl font-bold text-accent">{approvedCerts.length}</p>
+            <Card className="glass-card p-6 border-l-4 border-emerald-500">
+              <p className="text-sm text-muted-foreground mb-1">{t('dashboard_approved')}</p>
+              <p className="text-3xl font-bold text-emerald-600">{approvedCerts.length}</p>
             </Card>
-            <Card className="glass-card p-6">
+            <Card className="glass-card p-6 border-l-4 border-destructive">
               <p className="text-sm text-muted-foreground mb-1">{t('status_rejected')}</p>
               <p className="text-3xl font-bold text-destructive">{rejectedCerts.length}</p>
             </Card>
@@ -221,21 +190,29 @@ export default function OfficialDashboard() {
           {/* Search & Filter */}
           <Card className="glass-card p-4">
             <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by applicant name or certificate ID"
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={t('dash_search_placeholder')}
+                  className="w-full pl-10 pr-4 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
                 />
               </div>
               <Tabs value={filterStatus} onValueChange={(v) => setFilterStatus(v as any)} className="w-full md:w-auto">
                 <TabsList>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="pending">Pending</TabsTrigger>
-                  <TabsTrigger value="approved">Approved</TabsTrigger>
-                  <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                  <TabsTrigger value="pending" className="relative">
+                    {t('status_pending')}
+                    {pendingCerts.length > 0 && (
+                      <span className="ml-2 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full">
+                        {pendingCerts.length}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="approved">{t('status_approved')}</TabsTrigger>
+                  <TabsTrigger value="rejected">{t('status_rejected')}</TabsTrigger>
+                  <TabsTrigger value="all">{t('all')}</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -247,34 +224,36 @@ export default function OfficialDashboard() {
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="text-left p-4 font-semibold">ID</th>
-                    <th className="text-left p-4 font-semibold">{t('official_applicant')}</th>
-                    <th className="text-left p-4 font-semibold">{t('mycerts_type')}</th>
-                    <th className="text-left p-4 font-semibold">{t('mycerts_applied_on')}</th>
-                    <th className="text-left p-4 font-semibold">{t('mycerts_status')}</th>
-                    <th className="text-left p-4 font-semibold">Actions</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('table_id')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('table_applicant')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('mycerts_type')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('mycerts_applied_on')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('mycerts_status')}</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('table_actions')}</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {certificatesData.map((cert) => (
-                    <tr key={cert._id} className="border-t hover:bg-muted/30 transition-colors">
-                      <td className="p-4 font-mono text-sm">{cert._id}</td>
-                      <td className="p-4">{cert.applicantName}</td>
-                      <td className="p-4">{getCertificateLabel(cert.certificateType)}</td>
-                      <td className="p-4 text-sm text-muted-foreground">
+                <tbody className="divide-y divide-border">
+                  {displayCerts.map((cert) => (
+                    <tr key={cert._id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-mono">{cert.certificateId || cert._id.slice(-8).toUpperCase()}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">{cert.applicantName}</td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm">
+                        {t(`cert_${cert.certificateType}`)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {new Date(cert.appliedAt).toLocaleDateString()}
                       </td>
-                      <td className="p-4">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <StatusBadge status={cert.status} />
                       </td>
-                      <td className="p-4">
+                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => setSelectedCert(cert)}
                         >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Review
+                          <FileText className="h-4 w-4 mr-1" />
+                          {t('table_review')}
                         </Button>
                       </td>
                     </tr>
@@ -282,8 +261,11 @@ export default function OfficialDashboard() {
                 </tbody>
               </table>
               {displayCerts.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  No certificates to display
+                <div className="text-center py-12">
+                  <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <FileText className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-1">{t('table_no_certs')}</h3>
                 </div>
               )}
             </div>
@@ -291,7 +273,6 @@ export default function OfficialDashboard() {
         </motion.div>
       </main>
 
-      {/* Review Modal */}
       <Dialog open={!!selectedCert} onOpenChange={(open) => {
         if (!open) {
           setSelectedCert(null);
@@ -301,183 +282,113 @@ export default function OfficialDashboard() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading text-2xl text-indigo-700 dark:text-indigo-400">
-              {selectedCert && getHigherAuthorityStatus(selectedCert) === 'pending'
-                ? 'Review Certificate Application'
-                : 'Certificate Details'}
+              {t('modal_review_cert')}
             </DialogTitle>
           </DialogHeader>
 
           {selectedCert && (
             <div className="space-y-6">
-              {/* Certificate Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-muted/30 p-4 rounded-lg">
                 <div>
-                  <p className="text-sm text-muted-foreground">Certificate ID</p>
-                  <p className="font-mono font-semibold">{selectedCert._id}</p>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">{t('table_id')}</p>
+                  <p className="font-mono font-medium">{selectedCert.certificateId || selectedCert._id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Type</p>
-                  <p className="font-semibold">{getCertificateLabel(selectedCert.certificateType)}</p>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">{t('mycerts_type')}</p>
+                  <p className="font-medium">{t(`cert_${selectedCert.certificateType}`)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Applicant</p>
-                  <p className="font-semibold">{selectedCert.applicantName}</p>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">{t('table_applicant')}</p>
+                  <p className="font-medium">{selectedCert.applicantName}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Submitted</p>
-                  <p className="font-semibold">{new Date(selectedCert.appliedAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-muted-foreground uppercase font-semibold">{t('mycerts_applied_on')}</p>
+                  <p className="font-medium">{new Date(selectedCert.appliedAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
-              {/* Lower Authority Approval History */}
-              {selectedCert.approvalHistory && selectedCert.approvalHistory.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-3 text-emerald-700 dark:text-emerald-400">Lower Authority History</h4>
-                  <div className="space-y-2">
-                    {selectedCert.approvalHistory.map((history, idx) => (
-                      <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20'
-                        : 'bg-red-50 dark:bg-red-900/20'
-                        }`}>
-                        <div className="flex items-center justify-between">
-                          <span className={`font-medium ${history.action === 'approved' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
-                            }`}>
-                            {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(history.timestamp).toLocaleString()}
-                          </span>
+              {/* History Sections */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary" />
+                  {t('modal_approval_timeline')}
+                </h3>
+                
+                {/* Simplified History Display */}
+                {selectedCert.approvalHistory?.length > 0 && (
+                   <div className="border-l-2 border-primary/20 ml-3 pl-6 space-y-4">
+                      {selectedCert.approvalHistory.map((h, i) => (
+                        <div key={i} className="relative">
+                          <div className="absolute -left-[31px] top-1 bg-primary w-2 h-2 rounded-full" />
+                          <p className="text-sm font-bold">{t('modal_lower_level')}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StatusBadge status={h.action} />
+                            <span className="text-xs text-muted-foreground">{new Date(h.timestamp).toLocaleString()}</span>
+                          </div>
+                          {h.remarks && <p className="text-sm mt-1 text-muted-foreground italic">"{h.remarks}"</p>}
                         </div>
-                        {history.remarks && (
-                          <p className="text-sm mt-1 text-muted-foreground">{history.remarks}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Mid / Senior Authority Approval History */}
-              {selectedCert.seniorapprovalhistory && selectedCert.seniorapprovalhistory.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-3 text-amber-700 dark:text-amber-400">Mid Authority History</h4>
-                  <div className="space-y-2">
-                    {selectedCert.seniorapprovalhistory.map((history, idx) => (
-                      <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
-                        ? 'bg-amber-50 dark:bg-amber-900/20'
-                        : 'bg-red-50 dark:bg-red-900/20'
-                        }`}>
-                        <div className="flex items-center justify-between">
-                          <span className={`font-medium ${history.action === 'approved' ? 'text-amber-700 dark:text-amber-400' : 'text-red-700 dark:text-red-400'
-                            }`}>
-                            {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(history.timestamp).toLocaleString()}
-                          </span>
+                      ))}
+                   </div>
+                )}
+                
+                {selectedCert.seniorapprovalhistory?.length > 0 && (
+                   <div className="border-l-2 border-primary/20 ml-3 pl-6 space-y-4 mt-4">
+                      {selectedCert.seniorapprovalhistory.map((h, i) => (
+                        <div key={i} className="relative">
+                          <div className="absolute -left-[31px] top-1 bg-primary w-2 h-2 rounded-full" />
+                          <p className="text-sm font-bold">{t('modal_mid_level')}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StatusBadge status={h.action} />
+                            <span className="text-xs text-muted-foreground">{new Date(h.timestamp).toLocaleString()}</span>
+                          </div>
+                          {h.remarks && <p className="text-sm mt-1 text-muted-foreground italic">"{h.remarks}"</p>}
                         </div>
-                        {history.remarks && (
-                          <p className="text-sm mt-1 text-muted-foreground">{history.remarks}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      ))}
+                   </div>
+                )}
+              </div>
 
-              {/* Higher Official Approval History */}
-              {selectedCert.higherapprovalhistory && selectedCert.higherapprovalhistory.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-3 text-indigo-700 dark:text-indigo-400">Higher Official History</h4>
-                  <div className="space-y-2">
-                    {selectedCert.higherapprovalhistory.map((history, idx) => (
-                      <div key={history._id || idx} className={`p-3 rounded-lg ${history.action === 'approved'
-                        ? 'bg-indigo-50 dark:bg-indigo-900/20'
-                        : 'bg-red-50 dark:bg-red-900/20'
-                        }`}>
-                        <div className="flex items-center justify-between">
-                          <span className={`font-medium ${history.action === 'approved' ? 'text-indigo-700 dark:text-indigo-400' : 'text-red-700 dark:text-red-400'
-                            }`}>
-                            {history.level.charAt(0).toUpperCase() + history.level.slice(1)} Level: {history.action}
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(history.timestamp).toLocaleString()}
-                          </span>
-                        </div>
-                        {history.remarks && (
-                          <p className="text-sm mt-1 text-muted-foreground">{history.remarks}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Documents */}
               <div>
-                <h4 className="font-semibold mb-3">Submitted Documents</h4>
-                <div className="grid gap-2">
-                  {selectedCert.documentUrl && selectedCert.documentUrl.length > 0 ? (
-                    selectedCert.documentUrl.map((url, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <span className="text-sm">Document {idx + 1}</span>
-                        <div className="flex gap-2">
-                          <a
-                            className="btn btn-sm btn-ghost flex items-center hover:text-indigo-600"
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </a>
-                          <a
-                            className="btn btn-sm btn-ghost flex items-center hover:text-indigo-600"
-                            href={url}
-                            download
-                          >
-                            <Download className="h-4 w-4 mr-1" />
-                            Download
-                          </a>
-                        </div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-primary" />
+                  {t('modal_submitted_docs')}
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {selectedCert.documentUrl?.map((url, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <span className="text-xs font-medium truncate max-w-[150px]">{url.split('/').pop()}</span>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => window.open(url, '_blank')}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" asChild>
+                          <a href={url} download><Download className="h-4 w-4" /></a>
+                        </Button>
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No documents uploaded</p>
-                  )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Action Buttons — only when this authority's decision is still pending */}
               {getHigherAuthorityStatus(selectedCert) === 'pending' && (
-                <div className="space-y-4">
+                <div className="pt-4 border-t space-y-4">
                   <div className="space-y-2">
-                    <Label>{t('official_remarks')}</Label>
+                    <Label htmlFor="remarks">{t('official_remarks')}</Label>
                     <Textarea
+                      id="remarks"
                       placeholder={t('official_remarks_placeholder')}
                       value={rejectReason}
                       onChange={(e) => setRejectReason(e.target.value)}
-                      rows={3}
                     />
                   </div>
-
                   <div className="flex gap-3">
-                    <Button
-                      onClick={() => handleApprove(selectedCert)}
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {t('official_approve')}
-                    </Button>
-                    <Button
-                      onClick={() => handleReject(selectedCert)}
-                      variant="destructive"
-                      className="flex-1"
-                      disabled={rejectReason.trim() === ''}
-                      title={rejectReason.trim() === '' ? 'Enter rejection reason to enable' : 'Reject application'}
-                    >
+                    <Button variant="destructive" className="flex-1" onClick={() => handleReject(selectedCert)}>
                       <XCircle className="h-4 w-4 mr-2" />
                       {t('official_reject')}
+                    </Button>
+                    <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => handleApprove(selectedCert)}>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {t('official_approve')}
                     </Button>
                   </div>
                 </div>
