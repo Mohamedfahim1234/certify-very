@@ -11,6 +11,7 @@ import { Eye, Download, FileText, FileDown } from 'lucide-react';
 import axios from 'axios';
 import { CertificateStatus } from '@/contexts/CertificateContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import toast from 'react-hot-toast';
 import { generateCertificatePDF } from '@/utils/generateCertificatePDF';
 
 interface ApprovalHistoryItem {
@@ -37,6 +38,7 @@ interface Certificate {
   approvalHistory: ApprovalHistoryItem[];
   seniorapprovalhistory: ApprovalHistoryItem[];
   higherapprovalhistory: ApprovalHistoryItem[];
+  blockchainHash?: string;
 }
 
 interface StatusBadgeProps {
@@ -213,6 +215,27 @@ export default function MyCertificates() {
                   <p className="font-semibold">{new Date(selectedCert.appliedAt).toLocaleDateString()}</p>
                 </div>
               </div>
+
+              {/* Blockchain Fingerprint */}
+              {selectedCert.blockchainHash && (
+                <div className="bg-indigo-500/5 p-4 rounded-xl border border-indigo-500/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Digital Fingerprint (SHA-256)</p>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 text-[10px]"
+                      onClick={() => {
+                        navigator.clipboard.writeText(selectedCert.blockchainHash || '');
+                        toast.success('Hash copied to clipboard');
+                      }}
+                    >
+                      Copy Hash
+                    </Button>
+                  </div>
+                  <p className="text-[10px] font-mono break-all bg-background/50 p-2 rounded border select-all">{selectedCert.blockchainHash}</p>
+                </div>
+              )}
 
               {/* Documents */}
               <div>

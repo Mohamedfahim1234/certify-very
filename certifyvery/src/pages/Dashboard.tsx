@@ -4,7 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import ChatbotWidget from '@/components/ChatbotWidget';
 import { motion } from 'framer-motion';
-import { FileText, Search, MessageCircle, TrendingUp } from 'lucide-react';
+import { FileText, Search, MessageCircle, TrendingUp, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -168,6 +168,18 @@ export default function Dashboard() {
                 <div>
                   <h3 className="font-heading font-semibold text-lg mb-1">{t('dashboard_my_certs')}</h3>
                   <p className="text-sm text-muted-foreground">{t('dashboard_my_certs_desc')}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="glass-card p-6 hover:shadow-xl transition-shadow cursor-pointer group" onClick={() => navigate('/verify')}>
+              <div className="flex items-center gap-4">
+                <div className="p-4 rounded-lg bg-indigo-500/10 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                  <ShieldCheck className="h-8 w-8 text-indigo-600 group-hover:text-white" />
+                </div>
+                <div>
+                  <h3 className="font-heading font-semibold text-lg mb-1">{t('nav_verify') || 'Verify Certificate'}</h3>
+                  <p className="text-sm text-muted-foreground">Check authenticity via ID or file upload.</p>
                 </div>
               </div>
             </Card>

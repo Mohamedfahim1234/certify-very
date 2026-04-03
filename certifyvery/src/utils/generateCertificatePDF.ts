@@ -8,6 +8,7 @@ interface CertificateData {
   applicantName: string;
   certificateType: string;
   appliedAt: string | Date;
+  blockchainHash?: string;
   details?: any;
   [key: string]: any;
 }
@@ -363,6 +364,7 @@ export async function generateCertificatePDF(cert: CertificateData): Promise<voi
 
       <div class="cert-digital-note">
         This is a digitally generated certificate. Any tampering or alteration will render it invalid.
+        ${cert.blockchainHash ? `<br/>Digital Fingerprint: <span style="font-family:monospace; font-size:9px;">${cert.blockchainHash}</span>` : ''}
       </div>
     </div>
   `;

@@ -74,7 +74,8 @@ export default function UserLoginForm() {
         const response = await axios.post(`${API_URL}/user/login`, { email, otp });
         if (response.status === 200) {
           localStorage.setItem('token', response.data.token);
-          localStorage.setItem('role', response.data.user.role);
+          // Default to 'citizen' if role is undefined in DB schemas for older records
+          localStorage.setItem('role', response.data.user.role || 'citizen');
           navigate('/dashboard');
           toast.success(t('login_success'));
         } else {

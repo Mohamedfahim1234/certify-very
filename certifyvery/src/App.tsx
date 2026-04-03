@@ -21,6 +21,7 @@ import MidAuthorityDashboard from "./pages/MidAuthorityDashboard";
 import LowerAuthorityLogin from "./pages/LowerAuthorityLogin";
 import MidAuthorityLogin from "./pages/MidAuthorityLogin";
 import Unauthorized from "./pages/Unauthorized";
+import Verify from "./pages/Verify";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +89,7 @@ const App = () => (
               />
 
               <Route path="/unauthorized" element={<Unauthorized />} />
+              <Route path="/verify" element={<Verify />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

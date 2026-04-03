@@ -80,14 +80,15 @@ export default function OfficerLoginForm() {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('role', authorityLevel);
         localStorage.setItem('authorityLevel', authorityLevel);
-        toast.success(`Welcome back, ${official.username}!`);
+        toast.success(`Welcome back, ${official.username || official.name || official.email}!`);
         setLoading(false);
         navigate(getDashboardRoute(authorityLevel));
         return;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(t('officer_invalid_creds'));
+      const msg = error?.response?.data?.message || t('officer_invalid_creds') || 'Invalid email or password';
+      toast.error(msg);
       setLoginAttempts(prev => prev + 1);
       setLoading(false);
       return;

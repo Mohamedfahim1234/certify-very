@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    networks:
+      - certify-network
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build:
+      context: ./certifyverybackend
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      # Update this in your .env or here to map to the mongodb service name
+      - MONGO_URI=mongodb://mongodb:27017/certifyvery
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+    networks:
+      - certify-network
+    volumes:
+      - backend-cache:/app/.cache
+
+  frontend:
+    build:
+      context: ./certifyvery
+      dockerfile: Dockerfile
+    container_name: frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - certify-network
+
+networks:
+  certify-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  backend-cache:

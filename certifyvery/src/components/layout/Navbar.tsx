@@ -25,21 +25,25 @@ export const Navbar = () => {
     { to: '/dashboard', label: t('nav_home') },
     { to: '/apply', label: t('nav_apply') },
     { to: '/my-certificates', label: t('nav_my_certificates') },
+    { to: '/verify', label: t('nav_verify') || 'Verify' },
     { to: '/profile', label: t('nav_profile') },
   ];
 
   const lowerOfficerLinks = [
     { to: '/official-dashboard/lower', label: t('nav_dashboard') },
+    { to: '/verify', label: t('nav_verify') || 'Verify' },
     { to: '/profile', label: t('nav_profile') },
   ];
 
   const midOfficerLinks = [
     { to: '/official-dashboard/mid', label: t('nav_dashboard') },
+    { to: '/verify', label: t('nav_verify') || 'Verify' },
     { to: '/profile', label: t('nav_profile') },
   ];
 
   const higherOfficerLinks = [
     { to: '/official-dashboard', label: t('nav_dashboard') },
+    { to: '/verify', label: t('nav_verify') || 'Verify' },
     { to: '/profile', label: t('nav_profile') },
   ];
 

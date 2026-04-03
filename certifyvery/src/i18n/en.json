@@ -11,6 +11,7 @@
   "nav_my_certificates": "My Certificates",
   "nav_profile": "Profile",
   "nav_dashboard": "Dashboard",
+  "nav_verify": "Verify",
   "nav_logout": "Logout",
 
   "footer_tagline": "AI-Powered Certificate Registration and Verification System",
@@ -125,6 +126,10 @@
   "dashboard_help_desc": "Our Certificate Assistant is here to help you with any questions about the application process.",
   "dashboard_open_chatbot": "Open Chatbot",
 
+  "apply_step_type": "Select Type",
+  "apply_step_details": "Personal Details",
+  "apply_step_docs": "Documents",
+  "apply_step_review": "Review & Submit",
   "apply_title": "Apply for Certificate",
   "apply_desc": "Select certificate type and upload required documents",
   "apply_cert_type": "Certificate Type",
@@ -231,6 +236,9 @@
   "table_actions": "Actions",
   "table_review": "Review",
   "table_view": "View",
+  "table_verify": "Verify",
+  "table_verified": "Verified",
+  "modal_no_history": "No approval history available yet.",
   "table_no_certs": "No certificates to display",
   "dash_search_placeholder": "Search by applicant name or certificate ID",
   "dash_verified": "Verified",
@@ -248,6 +256,9 @@
   "modal_lower_level": "Lower Level",
   "modal_mid_level": "Mid Level",
   "modal_higher_level": "Higher Level",
+  "modal_doc_viewer": "Document Viewer",
+  "modal_open_doc": "Open Doc",
+  "modal_doc_unavailable": "No Document Available",
   "modal_rejection_reason": "Rejection Reason",
 
   "cert_download": "Download Certificate",
@@ -274,5 +285,18 @@
   "apply_field_parent_name": "Father's / Mother's Name",
   "sex_male": "Male",
   "sex_female": "Female",
-  "sex_other": "Other"
+  "sex_other": "Other",
+  "verify_title": "Digital Verification",
+  "verify_desc": "Verify the authenticity of any digital certificate using its unique blockchain fingerprint.",
+  "verify_label": "Certificate Hash / Fingerprint",
+  "verify_button": "Verify",
+  "verify_not_found": "No certificate found with this security hash.",
+  "verify_error": "Failed to verify certificate. Please try again.",
+  "verify_success": "Authenticity Verified",
+  "verify_failed": "Verification Failed",
+  "verify_genuine": "This certificate is genuine and was issued by the government portal.",
+  "verify_issued_on": "Issued On",
+  "verify_fingerprint": "Digital Fingerprint (SHA-256)",
+  "verify_copy_hash": "Copy Hash",
+  "verify_copied": "Hash copied to clipboard"
 }

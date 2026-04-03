@@ -13,12 +13,15 @@ export default function LandingPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return navigate('/');
+    if (!token) return; // No token — just show the landing page
     const role = localStorage.getItem('role');
     if (role === 'citizen') {
       navigate('/dashboard');
-    } else {
-      console.log('Navigating to official dashboard');
+    } else if (role === 'lower') {
+      navigate('/official-dashboard/lower');
+    } else if (role === 'mid') {
+      navigate('/official-dashboard/mid');
+    } else if (role === 'higher') {
       navigate('/official-dashboard');
     }
   }, [navigate]);
